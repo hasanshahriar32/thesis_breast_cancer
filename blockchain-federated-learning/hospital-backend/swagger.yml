@@ -1,0 +1,245 @@
+openapi: 3.0.0
+info:
+  title: Hospital Backend API
+  description: API for a single hospital node in a federated learning network for breast cancer detection.
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:3000/api
+    description: Development server
+
+tags:
+  - name: Hospital
+    description: Operations related to hospital information and status
+  - name: Patients
+    description: Patient data management and feature extraction
+  - name: Models
+    description: Local and global model training and management
+  - name: Blockchain
+    description: Interaction with the Ethereum smart contract
+  - name: IPFS
+    description: Interaction with the IPFS network for data storage
+
+paths:
+  /hospital/info:
+    get:
+      tags: [Hospital]
+      summary: Get hospital information
+      description: Retrieve detailed information about this hospital node.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HospitalInfoResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /hospital/stats:
+    get:
+      tags: [Hospital]
+      summary: Get hospital statistics
+      description: Retrieve patient and system statistics for this hospital.
+      responses:
+        '200':
+          description: Successful response
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /patients/upload:
+    post:
+      tags: [Patients]
+      summary: Upload patient data
+      description: Upload medical images (X-ray, Ultrasound, Histopathology) and metadata for a new patient.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                patient_metadata:
+                  type: string
+                  format: json
+                  description: JSON string of patient metadata.
+                xray:
+                  type: string
+                  format: binary
+                histopathology:
+                  type: string
+                  format: binary
+                ultrasound:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Patient data created
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /patients/list:
+    get:
+      tags: [Patients]
+      summary: List patients
+      description: Get a paginated list of patients for this hospital.
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: Successful response
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /patients/{id}:
+    get:
+      tags: [Patients]
+      summary: Get patient details
+      description: Retrieve full details for a specific patient by their ID.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /models/train-local:
+    post:
+      tags: [Models]
+      summary: Train local model
+      description: Start a training job for the local model using the hospital's patient data.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                epochs:
+                  type: integer
+                  default: 5
+                batch_size:
+                  type: integer
+                  default: 32
+      responses:
+        '200':
+          description: Training started successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /models/submit-to-chain:
+    post:
+      tags: [Models]
+      summary: Submit model to blockchain
+      description: Encrypt, upload to IPFS, and submit the latest local model's weights to the smart contract.
+      responses:
+        '200':
+          description: Model submitted successfully
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /blockchain/register-hospital:
+    post:
+      tags: [Blockchain]
+      summary: Register hospital
+      description: Register this hospital node on the blockchain smart contract.
+      responses:
+        '200':
+          description: Hospital registered
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /ipfs/status:
+    get:
+      tags: [IPFS]
+      summary: Get IPFS node status
+      description: Check the connection and status of the configured IPFS node.
+      responses:
+        '200':
+          description: IPFS node is connected
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  schemas:
+    HospitalInfo:
+      type: object
+      properties:
+        hospital_id:
+          type: string
+        hospital_name:
+          type: string
+        capabilities:
+          type: object
+          properties:
+            modalities:
+              type: array
+              items:
+                type: string
+            encryption_enabled:
+              type: boolean
+            ipfs_enabled:
+              type: boolean
+            blockchain_enabled:
+              type: boolean
+
+    HospitalInfoResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        hospital:
+          $ref: '#/components/schemas/HospitalInfo'
+
+  responses:
+    NotFound:
+      description: The specified resource was not found.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+    BadRequest:
+      description: The request was malformed or invalid.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+    InternalError:
+      description: An unexpected error occurred on the server.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              message:
+                type: string

@@ -11,6 +11,7 @@ const modelsRoutes = require('./routes/models');
 const blockchainRoutes = require('./routes/blockchain');
 const ipfsRoutes = require('./routes/ipfs');
 const featuresRoutes = require('./routes/features');
+const setupSwagger = require('./config/swagger');
 
 // Load environment variables
 dotenv.config();
@@ -31,6 +32,9 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// Setup Swagger documentation
+setupSwagger(app);
 
 // API Routes
 app.use('/api/hospital', hospitalRoutes);

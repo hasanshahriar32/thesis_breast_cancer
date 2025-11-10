@@ -38,7 +38,7 @@ class EncryptionService {
       const iv = crypto.randomBytes(this.ivLength);
       
       // Create cipher
-      const cipher = crypto.createCipher(this.algorithm, this.secretKey, iv);
+      const cipher = crypto.createCipheriv(this.algorithm, this.secretKey, iv);
       
       // Encrypt the data
       const encrypted = Buffer.concat([
@@ -88,7 +88,7 @@ class EncryptionService {
       const encrypted = encryptedData.slice(this.ivLength + this.tagLength);
       
       // Create decipher
-      const decipher = crypto.createDecipher(this.algorithm, this.secretKey, iv);
+      const decipher = crypto.createDecipheriv(this.algorithm, this.secretKey, iv);
       decipher.setAuthTag(tag);
       
       // Decrypt the data
