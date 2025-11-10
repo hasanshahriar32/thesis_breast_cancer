@@ -1,0 +1,67 @@
+{
+  "hospital_id": "HOSP_001_BOSTON",
+  "hospital_name": "Boston Medical Center",
+  "region": "North America",
+  "country": "United States",
+  "city": "Boston, MA",
+  "wallet_address": "0x1234567890123456789012345678901234567890",
+  "registration_date": "2025-01-15T10:30:00Z",
+  "contact_email": "fedlearn@bostonmedical.example.com",
+  "technical_contact": {
+    "name": "Dr. Sarah Johnson",
+    "role": "Chief Data Scientist",
+    "email": "sjohnson@bostonmedical.example.com",
+    "phone": "+1-617-555-0100"
+  },
+  "infrastructure": {
+    "compute": "GPU Cluster (4x NVIDIA A100)",
+    "storage": "500TB HIPAA-compliant storage",
+    "network": "10Gbps dedicated connection",
+    "ipfs_node": "local"
+  },
+  "patient_demographics": {
+    "total_patients": 1500,
+    "age_distribution": {
+      "30-40": 150,
+      "40-50": 350,
+      "50-60": 450,
+      "60-70": 400,
+      "70+": 150
+    },
+    "ethnicity_distribution": {
+      "caucasian": 600,
+      "african_american": 300,
+      "hispanic": 350,
+      "asian": 150,
+      "other": 100
+    },
+    "disease_distribution": {
+      "malignant": 900,
+      "benign": 600
+    }
+  },
+  "data_collection_period": {
+    "start_date": "2023-01-01",
+    "end_date": "2024-12-31"
+  },
+  "imaging_equipment": {
+    "xray": {
+      "manufacturer": "GE Healthcare",
+      "model": "Senographe Pristina",
+      "resolution": "2048x2048",
+      "protocol": "Standard mammography"
+    },
+    "histopathology": {
+      "manufacturer": "Leica Biosystems",
+      "model": "Aperio GT 450",
+      "magnification": "40x",
+      "staining": "H&E (Hematoxylin and Eosin)"
+    },
+    "ultrasound": {
+      "manufacturer": "Philips",
+      "model": "EPIQ Elite",
+      "frequency": "7.5-12 MHz",
+      "mode": "B-mode with Doppler"
+    }
+  }
+}
