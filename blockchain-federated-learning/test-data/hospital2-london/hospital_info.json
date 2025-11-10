@@ -1,0 +1,67 @@
+{
+  "hospital_id": "HOSP_002_LONDON",
+  "hospital_name": "Royal London Hospital",
+  "region": "Europe",
+  "country": "United Kingdom",
+  "city": "London",
+  "wallet_address": "0x2345678901234567890123456789012345678901",
+  "registration_date": "2025-01-16T09:15:00Z",
+  "contact_email": "fedlearn@royallondon.example.nhs.uk",
+  "technical_contact": {
+    "name": "Dr. James Thompson",
+    "role": "Director of Clinical Informatics",
+    "email": "jthompson@royallondon.example.nhs.uk",
+    "phone": "+44-20-7377-7000"
+  },
+  "infrastructure": {
+    "compute": "GPU Cluster (6x NVIDIA V100)",
+    "storage": "800TB NHS-compliant storage",
+    "network": "100Gbps dedicated connection",
+    "ipfs_node": "local with NHS data center backup"
+  },
+  "patient_demographics": {
+    "total_patients": 2800,
+    "age_distribution": {
+      "30-40": 280,
+      "40-50": 560,
+      "50-60": 840,
+      "60-70": 784,
+      "70+": 336
+    },
+    "ethnicity_distribution": {
+      "caucasian": 1400,
+      "african": 420,
+      "south_asian": 560,
+      "east_asian": 280,
+      "other": 140
+    },
+    "disease_distribution": {
+      "malignant": 1680,
+      "benign": 1120
+    }
+  },
+  "data_collection_period": {
+    "start_date": "2022-06-01",
+    "end_date": "2024-12-31"
+  },
+  "imaging_equipment": {
+    "xray": {
+      "manufacturer": "Hologic",
+      "model": "3Dimensions",
+      "resolution": "2560x2048",
+      "protocol": "Digital breast tomosynthesis"
+    },
+    "histopathology": {
+      "manufacturer": "Philips",
+      "model": "IntelliSite Ultra Fast Scanner",
+      "magnification": "40x",
+      "staining": "H&E with immunohistochemistry"
+    },
+    "ultrasound": {
+      "manufacturer": "GE Healthcare",
+      "model": "Invenia ABUS",
+      "frequency": "6-15 MHz",
+      "mode": "Automated whole breast ultrasound"
+    }
+  }
+}

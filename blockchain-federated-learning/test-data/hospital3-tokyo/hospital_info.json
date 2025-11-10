@@ -1,0 +1,65 @@
+{
+  "hospital_id": "HOSP_003_TOKYO",
+  "hospital_name": "Tokyo Medical University Hospital",
+  "region": "Asia",
+  "country": "Japan",
+  "city": "Tokyo",
+  "wallet_address": "0x3456789012345678901234567890123456789012",
+  "registration_date": "2025-01-17T03:45:00Z",
+  "contact_email": "fedlearn@tokyo-med.example.ac.jp",
+  "technical_contact": {
+    "name": "Dr. Yuki Nakamura",
+    "role": "Head of Medical AI Research",
+    "email": "ynakamura@tokyo-med.example.ac.jp",
+    "phone": "+81-3-3342-6111"
+  },
+  "infrastructure": {
+    "compute": "GPU Cluster (8x NVIDIA H100)",
+    "storage": "1.5PB JMIP-compliant storage",
+    "network": "200Gbps dedicated connection",
+    "ipfs_node": "local with regional backup nodes"
+  },
+  "patient_demographics": {
+    "total_patients": 3500,
+    "age_distribution": {
+      "30-40": 350,
+      "40-50": 700,
+      "50-60": 1050,
+      "60-70": 980,
+      "70+": 420
+    },
+    "ethnicity_distribution": {
+      "east_asian": 3150,
+      "caucasian": 175,
+      "other": 175
+    },
+    "disease_distribution": {
+      "malignant": 2100,
+      "benign": 1400
+    }
+  },
+  "data_collection_period": {
+    "start_date": "2021-01-01",
+    "end_date": "2024-12-31"
+  },
+  "imaging_equipment": {
+    "xray": {
+      "manufacturer": "Fujifilm",
+      "model": "AMULET Innovality",
+      "resolution": "3072x2304",
+      "protocol": "Digital mammography with tomosynthesis"
+    },
+    "histopathology": {
+      "manufacturer": "Olympus",
+      "model": "VS200 Research Slide Scanner",
+      "magnification": "40x",
+      "staining": "H&E with advanced immunohistochemistry"
+    },
+    "ultrasound": {
+      "manufacturer": "Canon Medical Systems",
+      "model": "Aplio i-series",
+      "frequency": "5-18 MHz",
+      "mode": "B-mode with elastography and 3D imaging"
+    }
+  }
+}

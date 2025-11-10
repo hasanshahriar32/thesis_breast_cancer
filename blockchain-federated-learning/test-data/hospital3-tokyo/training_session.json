@@ -1,0 +1,173 @@
+{
+  "session_id": "SESSION_TOKYO_003_2025Q1",
+  "hospital_id": "HOSP_003_TOKYO",
+  "timestamp": "2025-01-22T06:15:00Z",
+  "training_config": {
+    "batch_size": 128,
+    "epochs": 100,
+    "learning_rate": 0.00003,
+    "optimizer": "AdamW",
+    "loss_function": "focal_loss",
+    "early_stopping": {
+      "enabled": true,
+      "patience": 20,
+      "monitor": "val_auc"
+    }
+  },
+  "dataset_info": {
+    "total_samples": 3500,
+    "train_samples": 2450,
+    "validation_samples": 525,
+    "test_samples": 525,
+    "class_balance": {
+      "malignant": 2100,
+      "benign": 1400
+    },
+    "data_augmentation": {
+      "rotation_range": 30,
+      "width_shift_range": 0.2,
+      "height_shift_range": 0.2,
+      "horizontal_flip": true,
+      "vertical_flip": true,
+      "zoom_range": 0.25,
+      "shear_range": 0.15,
+      "brightness_range": [0.8, 1.2]
+    }
+  },
+  "extractors_performance": {
+    "xray_extractor": {
+      "model_name": "extractor_xray.h5",
+      "base_architecture": "EfficientNetB0",
+      "input_shape": [224, 224, 3],
+      "output_dimensions": 1280,
+      "training_time_seconds": 5400,
+      "local_accuracy": 0.9067,
+      "local_precision": 0.9189,
+      "local_recall": 0.8934,
+      "local_f1_score": 0.9060,
+      "local_auc_roc": 0.9523,
+      "confusion_matrix": {
+        "true_positive": 298,
+        "true_negative": 189,
+        "false_positive": 21,
+        "false_negative": 17
+      }
+    },
+    "histopathology_extractor": {
+      "model_name": "extractor_histo.h5",
+      "base_architecture": "EfficientNetB0",
+      "input_shape": [224, 224, 3],
+      "output_dimensions": 1280,
+      "training_time_seconds": 6000,
+      "local_accuracy": 0.9434,
+      "local_precision": 0.9512,
+      "local_recall": 0.9345,
+      "local_f1_score": 0.9428,
+      "local_auc_roc": 0.9789,
+      "confusion_matrix": {
+        "true_positive": 312,
+        "true_negative": 203,
+        "false_positive": 7,
+        "false_negative": 3
+      }
+    },
+    "ultrasound_extractor": {
+      "model_name": "extractor_ultra.h5",
+      "base_architecture": "EfficientNetB0",
+      "input_shape": [224, 224, 3],
+      "output_dimensions": 1280,
+      "training_time_seconds": 5100,
+      "local_accuracy": 0.8789,
+      "local_precision": 0.8945,
+      "local_recall": 0.8623,
+      "local_f1_score": 0.8781,
+      "local_auc_roc": 0.9345,
+      "confusion_matrix": {
+        "true_positive": 288,
+        "true_negative": 183,
+        "false_positive": 27,
+        "false_negative": 27
+      }
+    }
+  },
+  "fusion_model_performance": {
+    "model_name": "fusion_model.h5",
+    "architecture": "Dense layers with concatenated features",
+    "input_dimensions": 3840,
+    "output_classes": 2,
+    "training_time_seconds": 3000,
+    "local_accuracy": 0.9645,
+    "local_precision": 0.9712,
+    "local_recall": 0.9578,
+    "local_f1_score": 0.9645,
+    "local_auc_roc": 0.9889,
+    "confusion_matrix": {
+      "true_positive": 320,
+      "true_negative": 206,
+      "false_positive": 4,
+      "false_negative": 1
+    },
+    "classification_report": {
+      "benign": {
+        "precision": 0.9571,
+        "recall": 0.9810,
+        "f1_score": 0.9689,
+        "support": 210
+      },
+      "malignant": {
+        "precision": 0.9877,
+        "recall": 0.9481,
+        "f1_score": 0.9675,
+        "support": 315
+      }
+    }
+  },
+  "training_duration": {
+    "start_time": "2025-01-19T08:00:00Z",
+    "end_time": "2025-01-22T06:15:00Z",
+    "total_hours": 70.25,
+    "extractors_training_hours": 4.58,
+    "fusion_training_hours": 0.83,
+    "data_preprocessing_hours": 62,
+    "validation_hours": 2.84
+  },
+  "computational_resources": {
+    "gpu_hours": 9.2,
+    "total_flops": "7.3e+15",
+    "peak_memory_gb": 96,
+    "average_power_watts": 1600
+  },
+  "feature_statistics": {
+    "xray_features": {
+      "mean": 0.534,
+      "std": 0.289,
+      "min": -2.678,
+      "max": 5.012,
+      "sparsity": 0.09
+    },
+    "histopathology_features": {
+      "mean": 0.601,
+      "std": 0.334,
+      "min": -2.445,
+      "max": 4.567,
+      "sparsity": 0.05
+    },
+    "ultrasound_features": {
+      "mean": 0.478,
+      "std": 0.312,
+      "min": -2.589,
+      "max": 4.891,
+      "sparsity": 0.11
+    }
+  },
+  "data_privacy": {
+    "encryption_method": "AES-256-GCM",
+    "anonymization_level": "JMIP (Japan Medical Imaging Privacy) compliant",
+    "phi_removed": true,
+    "differential_privacy": {
+      "enabled": true,
+      "epsilon": 0.7,
+      "delta": 3e-6
+    }
+  }
+}

@@ -1,0 +1,571 @@
+{
+  "summary_id": "FEATURES_BOSTON_001_2025Q1",
+  "session_id": "SESSION_BOSTON_001_2025Q1",
+  "hospital_id": "HOSP_001_BOSTON",
+  "timestamp": "2025-01-20T14:45:30Z",
+  "total_samples": 1500,
+  "feature_extraction_summary": {
+    "xray_features": {
+      "modality": "X-Ray Mammography",
+      "total_features": 1280,
+      "feature_categories": [
+        {
+          "category": "Mass Characteristics",
+          "feature_indices": [0, 127],
+          "key_features": [
+            "mass_density",
+            "mass_shape_irregularity",
+            "mass_margin_spiculation",
+            "mass_size_ratio"
+          ],
+          "statistics": {
+            "mean_activation": 0.456,
+            "std_activation": 0.234,
+            "abnormality_threshold": 0.65
+          }
+        },
+        {
+          "category": "Calcification Patterns",
+          "feature_indices": [128, 255],
+          "key_features": [
+            "microcalcification_count",
+            "calcification_distribution",
+            "calcification_morphology",
+            "clustered_calcifications"
+          ],
+          "statistics": {
+            "mean_activation": 0.389,
+            "std_activation": 0.298,
+            "abnormality_threshold": 0.70
+          }
+        },
+        {
+          "category": "Architectural Distortion",
+          "feature_indices": [256, 383],
+          "key_features": [
+            "focal_asymmetry",
+            "tissue_disruption",
+            "radial_scar_pattern",
+            "stellate_distortion"
+          ],
+          "statistics": {
+            "mean_activation": 0.312,
+            "std_activation": 0.267,
+            "abnormality_threshold": 0.75
+          }
+        },
+        {
+          "category": "Breast Density",
+          "feature_indices": [384, 511],
+          "key_features": [
+            "birads_density_score",
+            "fibroglandular_tissue_percent",
+            "fatty_tissue_ratio",
+            "parenchymal_pattern"
+          ],
+          "statistics": {
+            "mean_activation": 0.523,
+            "std_activation": 0.189,
+            "abnormality_threshold": 0.60
+          }
+        },
+        {
+          "category": "Tissue Texture",
+          "feature_indices": [512, 639],
+          "key_features": [
+            "homogeneity_index",
+            "entropy_measure",
+            "contrast_ratio",
+            "coarseness_level"
+          ],
+          "statistics": {
+            "mean_activation": 0.467,
+            "std_activation": 0.223,
+            "abnormality_threshold": 0.68
+          }
+        },
+        {
+          "category": "Vascular Patterns",
+          "feature_indices": [640, 767],
+          "key_features": [
+            "vessel_prominence",
+            "vascular_asymmetry",
+            "perilesional_vascularity",
+            "vessel_tortuosity"
+          ],
+          "statistics": {
+            "mean_activation": 0.334,
+            "std_activation": 0.245,
+            "abnormality_threshold": 0.72
+          }
+        },
+        {
+          "category": "Lymph Node Features",
+          "feature_indices": [768, 895],
+          "key_features": [
+            "axillary_node_size",
+            "node_shape_round_vs_oval",
+            "node_cortical_thickness",
+            "node_fatty_hilum_loss"
+          ],
+          "statistics": {
+            "mean_activation": 0.289,
+            "std_activation": 0.278,
+            "abnormality_threshold": 0.78
+          }
+        },
+        {
+          "category": "Skin Changes",
+          "feature_indices": [896, 1023],
+          "key_features": [
+            "skin_thickening",
+            "skin_retraction",
+            "nipple_inversion",
+            "peau_d_orange"
+          ],
+          "statistics": {
+            "mean_activation": 0.256,
+            "std_activation": 0.289,
+            "abnormality_threshold": 0.80
+          }
+        },
+        {
+          "category": "Positional Features",
+          "feature_indices": [1024, 1151],
+          "key_features": [
+            "lesion_location_quadrant",
+            "lesion_depth",
+            "distance_to_nipple",
+            "distance_to_chest_wall"
+          ],
+          "statistics": {
+            "mean_activation": 0.445,
+            "std_activation": 0.212,
+            "abnormality_threshold": 0.66
+          }
+        },
+        {
+          "category": "Temporal Changes",
+          "feature_indices": [1152, 1279],
+          "key_features": [
+            "size_change_rate",
+            "new_lesion_appearance",
+            "lesion_stability_score",
+            "progressive_enhancement"
+          ],
+          "statistics": {
+            "mean_activation": 0.378,
+            "std_activation": 0.256,
+            "abnormality_threshold": 0.74
+          }
+        }
+      ],
+      "top_discriminative_features": [
+        {"feature_index": 45, "importance_score": 0.892, "name": "mass_margin_spiculation"},
+        {"feature_index": 167, "importance_score": 0.867, "name": "microcalcification_count"},
+        {"feature_index": 521, "importance_score": 0.834, "name": "birads_density_score"},
+        {"feature_index": 298, "importance_score": 0.812, "name": "focal_asymmetry"},
+        {"feature_index": 678, "importance_score": 0.789, "name": "vessel_prominence"}
+      ]
+    },
+    "histopathology_features": {
+      "modality": "Histopathology (H&E Staining)",
+      "total_features": 1280,
+      "feature_categories": [
+        {
+          "category": "Cellular Morphology",
+          "feature_indices": [0, 106],
+          "key_features": [
+            "nuclear_pleomorphism",
+            "cell_size_variation",
+            "cell_shape_irregularity",
+            "nuclei_size_ratio"
+          ],
+          "statistics": {
+            "mean_activation": 0.567,
+            "std_activation": 0.298,
+            "abnormality_threshold": 0.70
+          }
+        },
+        {
+          "category": "Nuclear Features",
+          "feature_indices": [107, 213],
+          "key_features": [
+            "hyperchromasia",
+            "nuclear_membrane_irregularity",
+            "chromatin_pattern",
+            "nucleoli_prominence"
+          ],
+          "statistics": {
+            "mean_activation": 0.612,
+            "std_activation": 0.289,
+            "abnormality_threshold": 0.68
+          }
+        },
+        {
+          "category": "Mitotic Activity",
+          "feature_indices": [214, 320],
+          "key_features": [
+            "mitotic_figure_count",
+            "atypical_mitoses",
+            "mitotic_index",
+            "cell_proliferation_rate"
+          ],
+          "statistics": {
+            "mean_activation": 0.489,
+            "std_activation": 0.312,
+            "abnormality_threshold": 0.75
+          }
+        },
+        {
+          "category": "Tissue Architecture",
+          "feature_indices": [321, 427],
+          "key_features": [
+            "glandular_structure_loss",
+            "ductal_pattern_disruption",
+            "tissue_disorganization",
+            "architectural_distortion"
+          ],
+          "statistics": {
+            "mean_activation": 0.534,
+            "std_activation": 0.276,
+            "abnormality_threshold": 0.72
+          }
+        },
+        {
+          "category": "Stromal Changes",
+          "feature_indices": [428, 534],
+          "key_features": [
+            "stromal_reaction",
+            "desmoplastic_response",
+            "stromal_cellularity",
+            "collagen_pattern"
+          ],
+          "statistics": {
+            "mean_activation": 0.445,
+            "std_activation": 0.267,
+            "abnormality_threshold": 0.74
+          }
+        },
+        {
+          "category": "Necrosis Patterns",
+          "feature_indices": [535, 641],
+          "key_features": [
+            "necrotic_area_percent",
+            "necrosis_pattern_type",
+            "comedo_necrosis",
+            "central_necrosis"
+          ],
+          "statistics": {
+            "mean_activation": 0.378,
+            "std_activation": 0.289,
+            "abnormality_threshold": 0.78
+          }
+        },
+        {
+          "category": "Immune Infiltration",
+          "feature_indices": [642, 748],
+          "key_features": [
+            "lymphocytic_infiltration",
+            "til_density",
+            "plasma_cell_presence",
+            "macrophage_density"
+          ],
+          "statistics": {
+            "mean_activation": 0.412,
+            "std_activation": 0.256,
+            "abnormality_threshold": 0.76
+          }
+        },
+        {
+          "category": "Vascular Invasion",
+          "feature_indices": [749, 855],
+          "key_features": [
+            "lymphovascular_invasion",
+            "vessel_density",
+            "angiogenesis_index",
+            "vascular_penetration"
+          ],
+          "statistics": {
+            "mean_activation": 0.356,
+            "std_activation": 0.278,
+            "abnormality_threshold": 0.80
+          }
+        },
+        {
+          "category": "Tumor Margins",
+          "feature_indices": [856, 962],
+          "key_features": [
+            "infiltrative_margin",
+            "pushing_border",
+            "margin_clarity",
+            "peritumoralinflammation"
+          ],
+          "statistics": {
+            "mean_activation": 0.467,
+            "std_activation": 0.245,
+            "abnormality_threshold": 0.73
+          }
+        },
+        {
+          "category": "Cell Differentiation",
+          "feature_indices": [963, 1069],
+          "key_features": [
+            "differentiation_grade",
+            "tubule_formation",
+            "luminal_structure",
+            "cell_polarity_loss"
+          ],
+          "statistics": {
+            "mean_activation": 0.523,
+            "std_activation": 0.267,
+            "abnormality_threshold": 0.71
+          }
+        },
+        {
+          "category": "Special Staining Patterns",
+          "feature_indices": [1070, 1176],
+          "key_features": [
+            "eosin_intensity",
+            "hematoxylin_distribution",
+            "cytoplasm_staining",
+            "nuclear_staining_intensity"
+          ],
+          "statistics": {
+            "mean_activation": 0.489,
+            "std_activation": 0.234,
+            "abnormality_threshold": 0.69
+          }
+        },
+        {
+          "category": "Histological Grade",
+          "feature_indices": [1177, 1279],
+          "key_features": [
+            "nottingham_grade_score",
+            "tubule_score",
+            "pleomorphism_score",
+            "mitotic_score"
+          ],
+          "statistics": {
+            "mean_activation": 0.556,
+            "std_activation": 0.289,
+            "abnormality_threshold": 0.67
+          }
+        }
+      ],
+      "top_discriminative_features": [
+        {"feature_index": 89, "importance_score": 0.923, "name": "nuclear_pleomorphism"},
+        {"feature_index": 245, "importance_score": 0.901, "name": "mitotic_figure_count"},
+        {"feature_index": 1234, "importance_score": 0.887, "name": "nottingham_grade_score"},
+        {"feature_index": 567, "importance_score": 0.865, "name": "necrotic_area_percent"},
+        {"feature_index": 789, "importance_score": 0.843, "name": "lymphovascular_invasion"}
+      ]
+    },
+    "ultrasound_features": {
+      "modality": "Breast Ultrasound",
+      "total_features": 1280,
+      "feature_categories": [
+        {
+          "category": "Lesion Shape",
+          "feature_indices": [0, 116],
+          "key_features": [
+            "shape_irregularity",
+            "oval_vs_round",
+            "taller_than_wide",
+            "angular_margins"
+          ],
+          "statistics": {
+            "mean_activation": 0.445,
+            "std_activation": 0.267,
+            "abnormality_threshold": 0.72
+          }
+        },
+        {
+          "category": "Lesion Margins",
+          "feature_indices": [117, 233],
+          "key_features": [
+            "margin_spiculation",
+            "microlobulation",
+            "indistinct_margins",
+            "angular_margins"
+          ],
+          "statistics": {
+            "mean_activation": 0.489,
+            "std_activation": 0.289,
+            "abnormality_threshold": 0.70
+          }
+        },
+        {
+          "category": "Echogenicity",
+          "feature_indices": [234, 350],
+          "key_features": [
+            "hypoechoic_pattern",
+            "heterogeneous_echo",
+            "complex_echo_pattern",
+            "echo_texture"
+          ],
+          "statistics": {
+            "mean_activation": 0.512,
+            "std_activation": 0.278,
+            "abnormality_threshold": 0.68
+          }
+        },
+        {
+          "category": "Posterior Features",
+          "feature_indices": [351, 467],
+          "key_features": [
+            "posterior_shadowing",
+            "posterior_enhancement",
+            "combined_pattern",
+            "no_posterior_features"
+          ],
+          "statistics": {
+            "mean_activation": 0.423,
+            "std_activation": 0.256,
+            "abnormality_threshold": 0.74
+          }
+        },
+        {
+          "category": "Calcifications",
+          "feature_indices": [468, 584],
+          "key_features": [
+            "macrocalcifications",
+            "microcalcifications_us",
+            "rim_calcifications",
+            "punctate_calcifications"
+          ],
+          "statistics": {
+            "mean_activation": 0.367,
+            "std_activation": 0.298,
+            "abnormality_threshold": 0.76
+          }
+        },
+        {
+          "category": "Vascularity",
+          "feature_indices": [585, 701],
+          "key_features": [
+            "internal_vascularity",
+            "peripheral_vascularity",
+            "chaotic_vessels",
+            "doppler_ri_index"
+          ],
+          "statistics": {
+            "mean_activation": 0.398,
+            "std_activation": 0.289,
+            "abnormality_threshold": 0.73
+          }
+        },
+        {
+          "category": "Elastography",
+          "feature_indices": [702, 818],
+          "key_features": [
+            "tissue_stiffness",
+            "strain_ratio",
+            "elasticity_score",
+            "bull_eye_artifact"
+          ],
+          "statistics": {
+            "mean_activation": 0.456,
+            "std_activation": 0.267,
+            "abnormality_threshold": 0.71
+          }
+        },
+        {
+          "category": "Surrounding Tissue",
+          "feature_indices": [819, 935],
+          "key_features": [
+            "architectural_distortion_us",
+            "duct_changes",
+            "tissue_edema",
+            "skin_thickening_us"
+          ],
+          "statistics": {
+            "mean_activation": 0.334,
+            "std_activation": 0.278,
+            "abnormality_threshold": 0.77
+          }
+        },
+        {
+          "category": "Orientation",
+          "feature_indices": [936, 1052],
+          "key_features": [
+            "parallel_orientation",
+            "non_parallel_orientation",
+            "vertical_growth",
+            "horizontal_spread"
+          ],
+          "statistics": {
+            "mean_activation": 0.412,
+            "std_activation": 0.245,
+            "abnormality_threshold": 0.75
+          }
+        },
+        {
+          "category": "Lesion Size",
+          "feature_indices": [1053, 1169],
+          "key_features": [
+            "max_diameter",
+            "ap_diameter",
+            "volume_estimation",
+            "growth_rate"
+          ],
+          "statistics": {
+            "mean_activation": 0.478,
+            "std_activation": 0.234,
+            "abnormality_threshold": 0.69
+          }
+        },
+        {
+          "category": "Associated Features",
+          "feature_indices": [1170, 1279],
+          "key_features": [
+            "cooper_ligament_changes",
+            "pectoralis_involvement",
+            "lymph_node_abnormality_us",
+            "edema_pattern"
+          ],
+          "statistics": {
+            "mean_activation": 0.356,
+            "std_activation": 0.289,
+            "abnormality_threshold": 0.78
+          }
+        }
+      ],
+      "top_discriminative_features": [
+        {"feature_index": 178, "importance_score": 0.876, "name": "margin_spiculation"},
+        {"feature_index": 456, "importance_score": 0.854, "name": "posterior_shadowing"},
+        {"feature_index": 734, "importance_score": 0.832, "name": "tissue_stiffness"},
+        {"feature_index": 289, "importance_score": 0.809, "name": "hypoechoic_pattern"},
+        {"feature_index": 623, "importance_score": 0.787, "name": "chaotic_vessels"}
+      ]
+    }
+  },
+  "combined_features": {
+    "total_dimensions": 3840,
+    "fusion_strategy": "Concatenation with learned weights",
+    "feature_correlation": {
+      "xray_histo": 0.67,
+      "xray_ultra": 0.59,
+      "histo_ultra": 0.72
+    },
+    "multimodal_synergy_score": 0.85
+  },
+  "abnormality_detection": {
+    "total_abnormal_samples": 900,
+    "total_normal_samples": 600,
+    "abnormality_distribution": {
+      "high_confidence_malignant": 675,
+      "moderate_confidence_malignant": 180,
+      "low_confidence_malignant": 45,
+      "high_confidence_benign": 450,
+      "moderate_confidence_benign": 120,
+      "low_confidence_benign": 30
+    },
+    "feature_thresholds": {
+      "xray_abnormality_threshold": 0.70,
+      "histopathology_abnormality_threshold": 0.72,
+      "ultrasound_abnormality_threshold": 0.68,
+      "fusion_abnormality_threshold": 0.75
+    }
+  }
+}

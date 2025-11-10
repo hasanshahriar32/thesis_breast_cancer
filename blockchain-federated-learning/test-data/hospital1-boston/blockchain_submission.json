@@ -1,0 +1,157 @@
+{
+  "submission_id": "SUBMIT_BOSTON_001_2025Q1",
+  "hospital_id": "HOSP_001_BOSTON",
+  "submission_timestamp": "2025-01-20T15:00:00Z",
+  "blockchain_network": "Ethereum Sepolia Testnet",
+  "contract_address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  "submitter_wallet": "0x1234567890123456789012345678901234567890",
+  "transaction_data": {
+    "function_name": "submitUpdate",
+    "function_parameters": {
+      "fusionCid": "QmXg9Pp2ytZ8H6kA9iuQqYtpVvL8j7qX9kS4dN3eR2wT5m",
+      "xrayCid": "QmYh8Qq3zuA9J7lB0jvRrZuqWwM9k8sY0oU5fO4gS3xU6n",
+      "histoCid": "QmZi9Rr4ABv0K8mC1kwSsYvrXxN0l9tZ1pV6gP5hT4yV7o",
+      "ultraCid": "QmAj0Ss5BCw1L9nD2lxTtZwsYyO1m0uA2qW7hQ6iU5zW8p",
+      "localAccuracy": "93.78%",
+      "samples": 1500,
+      "trainingDuration": 197100
+    },
+    "gas_estimate": {
+      "gas_limit": 500000,
+      "max_fee_per_gas": "50000000000",
+      "max_priority_fee_per_gas": "2000000000",
+      "estimated_cost_eth": "0.025",
+      "estimated_cost_usd": "62.50"
+    }
+  },
+  "ipfs_uploads": [
+    {
+      "model_name": "fusion_model.h5",
+      "ipfs_cid": "QmXg9Pp2ytZ8H6kA9iuQqYtpVvL8j7qX9kS4dN3eR2wT5m",
+      "upload_timestamp": "2025-01-20T14:50:00Z",
+      "file_size_bytes": 12583168,
+      "encryption_status": "AES-256-GCM",
+      "pinning_service": "Pinata",
+      "pin_status": "pinned"
+    },
+    {
+      "model_name": "extractor_xray.h5",
+      "ipfs_cid": "QmYh8Qq3zuA9J7lB0jvRrZuqWwM9k8sY0oU5fO4gS3xU6n",
+      "upload_timestamp": "2025-01-20T14:52:00Z",
+      "file_size_bytes": 13422080,
+      "encryption_status": "AES-256-GCM",
+      "pinning_service": "Pinata",
+      "pin_status": "pinned"
+    },
+    {
+      "model_name": "extractor_histo.h5",
+      "ipfs_cid": "QmZi9Rr4ABv0K8mC1kwSsYvrXxN0l9tZ1pV6gP5hT4yV7o",
+      "upload_timestamp": "2025-01-20T14:54:00Z",
+      "file_size_bytes": 13422080,
+      "encryption_status": "AES-256-GCM",
+      "pinning_service": "Pinata",
+      "pin_status": "pinned"
+    },
+    {
+      "model_name": "extractor_ultra.h5",
+      "ipfs_cid": "QmAj0Ss5BCw1L9nD2lxTtZwsYyO1m0uA2qW7hQ6iU5zW8p",
+      "upload_timestamp": "2025-01-20T14:56:00Z",
+      "file_size_bytes": 13422080,
+      "encryption_status": "AES-256-GCM",
+      "pinning_service": "Pinata",
+      "pin_status": "pinned"
+    }
+  ],
+  "weight_metadata_submission": {
+    "function_name": "storeWeightMetadata",
+    "parameters": {
+      "version": 1,
+      "fusionParams": 3847426,
+      "xrayParams": 4049571,
+      "histoParams": 4049571,
+      "ultraParams": 4049571,
+      "fusionSize": 12583168,
+      "xraySize": 13422080,
+      "histoSize": 13422080,
+      "ultraSize": 13422080,
+      "framework": "TensorFlow/Keras 2.15.0"
+    }
+  },
+  "validation_checks": {
+    "hospital_registered": true,
+    "hospital_active": true,
+    "minimum_samples_met": true,
+    "accuracy_valid": true,
+    "ipfs_cids_valid": true,
+    "gas_sufficient": true,
+    "ready_to_submit": true
+  },
+  "oracle_integration": {
+    "oracle_type": "Chainlink",
+    "oracle_job_id": "d5270d1c311941d0b08bead21fea7747",
+    "verification_data": {
+      "accuracy_verified": true,
+      "sample_count_verified": true,
+      "training_duration_verified": true,
+      "ipfs_availability_verified": true
+    },
+    "oracle_fee_eth": "0.001",
+    "oracle_callback_gas_limit": 200000
+  },
+  "expected_events": [
+    {
+      "event_name": "UpdateSubmitted",
+      "expected_params": {
+        "hospital": "0x1234567890123456789012345678901234567890",
+        "version": 1,
+        "fusionCid": "QmXg9Pp2ytZ8H6kA9iuQqYtpVvL8j7qX9kS4dN3eR2wT5m",
+        "samples": 1500
+      }
+    }
+  ],
+  "post_submission_actions": [
+    {
+      "action": "Monitor transaction status",
+      "tool": "Etherscan Sepolia",
+      "estimated_confirmation_blocks": 3
+    },
+    {
+      "action": "Verify event emission",
+      "event": "UpdateSubmitted",
+      "verification_method": "Contract event logs"
+    },
+    {
+      "action": "Check submission count",
+      "query": "getCurrentVersion()",
+      "expected_result": "Incremented version counter"
+    },
+    {
+      "action": "Verify IPFS pinning",
+      "check": "All 4 CIDs remain pinned",
+      "duration": "Permanent"
+    }
+  ],
+  "rollback_plan": {
+    "conditions": [
+      "Transaction fails",
+      "Gas price too high",
+      "Oracle verification fails",
+      "IPFS unavailable"
+    ],
+    "actions": [
+      "Revert local state",
+      "Unpin IPFS files (optional)",
+      "Log error details",
+      "Alert administrator",
+      "Retry with adjusted parameters"
+    ]
+  },
+  "compliance": {
+    "hipaa_compliant": true,
+    "gdpr_compliant": true,
+    "data_anonymized": true,
+    "phi_removed": true,
+    "encryption_level": "AES-256-GCM",
+    "audit_trail": "Complete transaction history on blockchain"
+  }
+}

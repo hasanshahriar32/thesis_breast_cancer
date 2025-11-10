@@ -1,0 +1,120 @@
+{
+  "submission_id": "SUBMIT_LONDON_002_2025Q1",
+  "hospital_id": "HOSP_002_LONDON",
+  "submission_timestamp": "2025-01-21T12:00:00Z",
+  "blockchain_network": "Ethereum Sepolia Testnet",
+  "contract_address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  "submitter_wallet": "0x2345678901234567890123456789012345678901",
+  "transaction_data": {
+    "function_name": "submitUpdate",
+    "function_parameters": {
+      "fusionCid": "QmBk1Tt6CDx2M0oE3mySuZxtWxN1n0vB3rX8iV7jZ6aX9q",
+      "xrayCid": "QmCl2Uu7DEy3N1pF4nzTvXwtYyP2o1wC4sY9jW8kA7bY0r",
+      "histoCid": "QmDm3Vv8EFz4O2qG5oATwYxuZyQ3p2xD5tZ0kX9lB8cZ1s",
+      "ultraCid": "QmEn4Ww9FGa5P3rH6pBUxZyvAzR4q3yE6uA1lY0mC9dA2t",
+      "localAccuracy": "95.12%",
+      "samples": 2800,
+      "trainingDuration": 250200
+    },
+    "gas_estimate": {
+      "gas_limit": 500000,
+      "max_fee_per_gas": "45000000000",
+      "max_priority_fee_per_gas": "1800000000",
+      "estimated_cost_eth": "0.0225",
+      "estimated_cost_usd": "56.25"
+    }
+  },
+  "ipfs_uploads": [
+    {
+      "model_name": "fusion_model.h5",
+      "ipfs_cid": "QmBk1Tt6CDx2M0oE3mySuZxtWxN1n0vB3rX8iV7jZ6aX9q",
+      "upload_timestamp": "2025-01-21T11:45:00Z",
+      "file_size_bytes": 12583424,
+      "encryption_status": "AES-256-GCM",
+      "pinning_service": "Pinata",
+      "pin_status": "pinned"
+    },
+    {
+      "model_name": "extractor_xray.h5",
+      "ipfs_cid": "QmCl2Uu7DEy3N1pF4nzTvXwtYyP2o1wC4sY9jW8kA7bY0r",
+      "upload_timestamp": "2025-01-21T11:48:00Z",
+      "file_size_bytes": 13422336,
+      "encryption_status": "AES-256-GCM",
+      "pinning_service": "Pinata",
+      "pin_status": "pinned"
+    },
+    {
+      "model_name": "extractor_histo.h5",
+      "ipfs_cid": "QmDm3Vv8EFz4O2qG5oATwYxuZyQ3p2xD5tZ0kX9lB8cZ1s",
+      "upload_timestamp": "2025-01-21T11:51:00Z",
+      "file_size_bytes": 13422336,
+      "encryption_status": "AES-256-GCM",
+      "pinning_service": "Pinata",
+      "pin_status": "pinned"
+    },
+    {
+      "model_name": "extractor_ultra.h5",
+      "ipfs_cid": "QmEn4Ww9FGa5P3rH6pBUxZyvAzR4q3yE6uA1lY0mC9dA2t",
+      "upload_timestamp": "2025-01-21T11:54:00Z",
+      "file_size_bytes": 13422336,
+      "encryption_status": "AES-256-GCM",
+      "pinning_service": "Pinata",
+      "pin_status": "pinned"
+    }
+  ],
+  "weight_metadata_submission": {
+    "function_name": "storeWeightMetadata",
+    "parameters": {
+      "version": 1,
+      "fusionParams": 3847426,
+      "xrayParams": 4049571,
+      "histoParams": 4049571,
+      "ultraParams": 4049571,
+      "fusionSize": 12583424,
+      "xraySize": 13422336,
+      "histoSize": 13422336,
+      "ultraSize": 13422336,
+      "framework": "TensorFlow/Keras 2.15.0"
+    }
+  },
+  "validation_checks": {
+    "hospital_registered": true,
+    "hospital_active": true,
+    "minimum_samples_met": true,
+    "accuracy_valid": true,
+    "ipfs_cids_valid": true,
+    "gas_sufficient": true,
+    "ready_to_submit": true
+  },
+  "oracle_integration": {
+    "oracle_type": "Chainlink",
+    "oracle_job_id": "d5270d1c311941d0b08bead21fea7747",
+    "verification_data": {
+      "accuracy_verified": true,
+      "sample_count_verified": true,
+      "training_duration_verified": true,
+      "ipfs_availability_verified": true
+    },
+    "oracle_fee_eth": "0.001",
+    "oracle_callback_gas_limit": 200000
+  },
+  "expected_events": [
+    {
+      "event_name": "UpdateSubmitted",
+      "expected_params": {
+        "hospital": "0x2345678901234567890123456789012345678901",
+        "version": 1,
+        "fusionCid": "QmBk1Tt6CDx2M0oE3mySuZxtWxN1n0vB3rX8iV7jZ6aX9q",
+        "samples": 2800
+      }
+    }
+  ],
+  "compliance": {
+    "nhs_compliant": true,
+    "gdpr_compliant": true,
+    "data_anonymized": true,
+    "phi_removed": true,
+    "encryption_level": "AES-256-GCM",
+    "audit_trail": "Complete transaction history on blockchain"
+  }
+}

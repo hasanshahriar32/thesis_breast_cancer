@@ -1,0 +1,7 @@
+{"level":"\u001b[33mwarn\u001b[39m","message":"\u001b[33mNo encryption key found in environment, generating new key\u001b[39m","timestamp":"2025-11-10 10:01:15:115"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mGenerated encryption key: a200c9b807fa27d7da1d43cae51beb76aa6281d982d76443a1bb42e0a9fb18dc\u001b[39m","timestamp":"2025-11-10 10:01:15:115"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m🏥 Hospital Federated Learning Backend started on port 3000\u001b[39m","timestamp":"2025-11-10 10:01:16:116"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m🌐 Hospital ID: 4\u001b[39m","timestamp":"2025-11-10 10:01:16:116"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m📊 Environment: development\u001b[39m","timestamp":"2025-11-10 10:01:16:116"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m🔗 Health check: http://localhost:3000/health\u001b[39m","timestamp":"2025-11-10 10:01:16:116"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ IPFS connection closed\u001b[39m","timestamp":"2025-11-10 10:02:49:249"}

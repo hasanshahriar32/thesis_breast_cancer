@@ -1,0 +1,94 @@
+{
+  "summary_id": "FEATURES_LONDON_002_2025Q1",
+  "session_id": "SESSION_LONDON_002_2025Q1", 
+  "hospital_id": "HOSP_002_LONDON",
+  "timestamp": "2025-01-21T11:30:00Z",
+  "total_samples": 2800,
+  "feature_extraction_summary": {
+    "xray_features": {
+      "modality": "X-Ray Mammography",
+      "total_features": 1280,
+      "feature_categories": [
+        {
+          "category": "Mass Characteristics",
+          "feature_indices": [0, 127],
+          "key_features": ["mass_density", "mass_shape_irregularity"],
+          "statistics": {
+            "mean_activation": 0.512,
+            "std_activation": 0.267,
+            "abnormality_threshold": 0.70
+          }
+        }
+      ],
+      "top_discriminative_features": [
+        {"feature_index": 45, "importance_score": 0.876, "name": "mass_margin_spiculation"}
+      ]
+    },
+    "histopathology_features": {
+      "modality": "Histopathology (H&E Staining)",
+      "total_features": 1280,
+      "feature_categories": [
+        {
+          "category": "Cellular Morphology",
+          "feature_indices": [0, 106],
+          "key_features": ["nuclear_pleomorphism", "cell_size_variation"],
+          "statistics": {
+            "mean_activation": 0.578,
+            "std_activation": 0.312,
+            "abnormality_threshold": 0.72
+          }
+        }
+      ],
+      "top_discriminative_features": [
+        {"feature_index": 89, "importance_score": 0.912, "name": "nuclear_pleomorphism"}
+      ]
+    },
+    "ultrasound_features": {
+      "modality": "Breast Ultrasound",
+      "total_features": 1280,
+      "feature_categories": [
+        {
+          "category": "Lesion Shape",
+          "feature_indices": [0, 116],
+          "key_features": ["shape_irregularity", "oval_vs_round"],
+          "statistics": {
+            "mean_activation": 0.445,
+            "std_activation": 0.289,
+            "abnormality_threshold": 0.68
+          }
+        }
+      ],
+      "top_discriminative_features": [
+        {"feature_index": 178, "importance_score": 0.854, "name": "margin_spiculation"}
+      ]
+    }
+  },
+  "combined_features": {
+    "total_dimensions": 3840,
+    "fusion_strategy": "Concatenation with learned weights",
+    "feature_correlation": {
+      "xray_histo": 0.71,
+      "xray_ultra": 0.63,
+      "histo_ultra": 0.76
+    },
+    "multimodal_synergy_score": 0.89
+  },
+  "abnormality_detection": {
+    "total_abnormal_samples": 1680,
+    "total_normal_samples": 1120,
+    "abnormality_distribution": {
+      "high_confidence_malignant": 1260,
+      "moderate_confidence_malignant": 336,
+      "low_confidence_malignant": 84,
+      "high_confidence_benign": 840,
+      "moderate_confidence_benign": 224,
+      "low_confidence_benign": 56
+    },
+    "feature_thresholds": {
+      "xray_abnormality_threshold": 0.70,
+      "histopathology_abnormality_threshold": 0.72,
+      "ultrasound_abnormality_threshold": 0.68,
+      "fusion_abnormality_threshold": 0.75
+    }
+  }
+}
