@@ -119,6 +119,63 @@ class FeatureExtractor {
       feature_vector: Array.from(featuresArray),
       feature_dimension: featuresArray.length,
       images_processed: processedImages.length,
+      processed_images: processedImages
+    };
+  }
+
+  /**
+   * Extract features from buffers (in-memory) instead of files
+   */
+  async extractModalityFeaturesFromBuffers(files, modality) {
+    await this.initialize();
+    
+    if (!this.models[modality]) {
+      throw new Error(`Model for ${modality} not available`);
+    }
+
+    logger.info(`Extracting features for ${files.length} ${modality} images from buffers`);
+    
+    const allFeatures = [];
+    const processedImages = [];
+
+    for (const file of files) {
+      try {
+        const features = await this.extractSingleImageFeaturesFromBuffer(file.buffer, modality);
+        allFeatures.push(features);
+        
+        processedImages.push({
+          filename: file.originalname,
+          features_shape: features.shape,
+          processed_at: new Date().toISOString()
+        });
+        
+      } catch (error) {
+        logger.error(`Failed to extract features from ${file.originalname}:`, error);
+        continue;
+      }
+    }
+
+    if (allFeatures.length === 0) {
+      throw new Error(`No features extracted from ${modality} images`);
+    }
+
+    // Average features across all images of this modality
+    const stackedFeatures = tf.stack(allFeatures);
+    const averageFeatures = tf.mean(stackedFeatures, 0);
+    
+    // Convert to array for storage
+    const featuresArray = await averageFeatures.data();
+    
+    // Cleanup tensors
+    stackedFeatures.dispose();
+    averageFeatures.dispose();
+    allFeatures.forEach(tensor => tensor.dispose());
+
+    return {
+      modality: modality,
+      feature_vector: Array.from(featuresArray),
+      feature_dimension: featuresArray.length,
+      images_processed: processedImages.length,
       extraction_timestamp: new Date().toISOString(),
       processed_images: processedImages
     };
@@ -127,6 +184,22 @@ class FeatureExtractor {
   async extractSingleImageFeatures(imagePath, modality) {
     // Load and preprocess image
     const imageBuffer = await fs.readFile(imagePath);
+    const processedImage = await this.preprocessImage(imageBuffer, modality);
+    
+    // Extract features using the model
+    const features = this.models[modality].predict(processedImage);
+    
+    // Cleanup input tensor
+    processedImage.dispose();
+    
+    return features;
+  }
+
+  /**
+   * Extract features from image buffer (no file I/O)
+   */
+  async extractSingleImageFeaturesFromBuffer(imageBuffer, modality) {
+    // Preprocess image buffer directly
     const processedImage = await this.preprocessImage(imageBuffer, modality);
     
     // Extract features using the model

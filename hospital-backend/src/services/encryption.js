@@ -75,6 +75,52 @@ class EncryptionService {
     }
   }
 
+  /**
+   * Encrypt a buffer directly (no file I/O)
+   * @param {Buffer} buffer - Buffer to encrypt
+   * @returns {Object} - Encrypted buffer and metadata
+   */
+  async encryptBuffer(buffer) {
+    try {
+      logger.info(`Encrypting buffer of size: ${buffer.length} bytes`);
+      
+      // Generate random IV
+      const iv = crypto.randomBytes(this.ivLength);
+      
+      // Create cipher
+      const cipher = crypto.createCipheriv(this.algorithm, this.secretKey, iv);
+      
+      // Encrypt the data
+      const encrypted = Buffer.concat([
+        cipher.update(buffer),
+        cipher.final()
+      ]);
+      
+      // Get the authentication tag
+      const tag = cipher.getAuthTag();
+      
+      // Combine IV + tag + encrypted data
+      const encryptedBuffer = Buffer.concat([iv, tag, encrypted]);
+      
+      // Calculate checksum
+      const checksum = this.calculateChecksum(encryptedBuffer);
+      
+      logger.info(`Buffer encrypted successfully`);
+      
+      return {
+        encryptedBuffer: encryptedBuffer,
+        original_size: buffer.length,
+        encrypted_size: encryptedBuffer.length,
+        checksum: checksum,
+        encryption_timestamp: new Date().toISOString()
+      };
+      
+    } catch (error) {
+      logger.error(`Failed to encrypt buffer:`, error);
+      throw new Error(`Buffer encryption failed: ${error.message}`);
+    }
+  }
+
   async decryptFile(encryptedPath) {
     try {
       logger.info(`Decrypting file: ${encryptedPath}`);

@@ -17,12 +17,14 @@ class PatientService {
       const mongoUrl = process.env.MONGODB_URL || 'mongodb://localhost:27017';
       const dbName = process.env.MONGODB_DB_NAME || 'hospital_federated_learning';
       
-      logger.info(`Connecting to MongoDB: ${mongoUrl}`);
+      logger.info(`Connecting to MongoDB...`);
       
       this.client = new MongoClient(mongoUrl, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
-        serverSelectionTimeoutMS: 5000
+        serverSelectionTimeoutMS: 10000, // Increased timeout to 10 seconds
+        connectTimeoutMS: 10000,
+        socketTimeoutMS: 45000,
       });
       
       await this.client.connect();
@@ -36,7 +38,8 @@ class PatientService {
       logger.info('✓ Connected to MongoDB successfully');
       
     } catch (error) {
-      logger.error('Failed to connect to MongoDB:', error);
+      logger.error('Failed to connect to MongoDB:', error.message);
+      this.isConnected = false;
       throw new Error(`Database connection failed: ${error.message}`);
     }
   }
@@ -59,7 +62,9 @@ class PatientService {
   }
 
   async createPatient(patientData) {
-    await this.connect();
+    if (!this.isConnected) {
+      throw new Error('Database not connected. Please ensure server started properly.');
+    }
 
     try {
       const patient = {
@@ -93,7 +98,9 @@ class PatientService {
   }
 
   async getPatients(options = {}) {
-    await this.connect();
+    if (!this.isConnected) {
+      throw new Error('Database not connected. Please ensure server started properly.');
+    }
 
     try {
       const {
@@ -169,7 +176,7 @@ class PatientService {
   }
 
   async getPatient(patientId, options = {}) {
-    await this.connect();
+    if (!this.isConnected) throw new Error("Database not connected. Please ensure server started properly.");
 
     try {
       const {
@@ -215,7 +222,7 @@ class PatientService {
   }
 
   async updatePatientFeatures(patientId, features) {
-    await this.connect();
+    if (!this.isConnected) throw new Error("Database not connected. Please ensure server started properly.");
 
     try {
       const updateData = {
@@ -244,7 +251,7 @@ class PatientService {
   }
 
   async updatePatient(patientId, updateData, options = {}) {
-    await this.connect();
+    if (!this.isConnected) throw new Error("Database not connected. Please ensure server started properly.");
 
     try {
       const { hospital_id } = options;
@@ -285,7 +292,7 @@ class PatientService {
   }
 
   async deletePatient(patientId, options = {}) {
-    await this.connect();
+    if (!this.isConnected) throw new Error("Database not connected. Please ensure server started properly.");
 
     try {
       const { hospital_id, secure_delete = true } = options;
@@ -355,7 +362,7 @@ class PatientService {
   }
 
   async getPatientStatistics(hospitalId) {
-    await this.connect();
+    if (!this.isConnected) throw new Error("Database not connected. Please ensure server started properly.");
 
     try {
       const pipeline = [

@@ -12,6 +12,7 @@ const blockchainRoutes = require('./routes/blockchain');
 const ipfsRoutes = require('./routes/ipfs');
 const featuresRoutes = require('./routes/features');
 const setupSwagger = require('./config/swagger');
+const patientService = require('./services/patient');
 
 // Load environment variables
 dotenv.config();
@@ -112,12 +113,28 @@ process.on('SIGINT', () => {
   process.exit(0);
 });
 
-// Start server
-app.listen(PORT, () => {
-  logger.info(`🏥 Hospital Federated Learning Backend started on port ${PORT}`);
-  logger.info(`🌐 Hospital ID: ${process.env.HOSPITAL_ID}`);
-  logger.info(`📊 Environment: ${process.env.NODE_ENV}`);
-  logger.info(`🔗 Health check: http://localhost:${PORT}/health`);
-});
+// Start server and initialize database connection
+async function startServer() {
+  try {
+    // Connect to MongoDB at startup
+    logger.info('Initializing database connection...');
+    await patientService.connect();
+    logger.info('✓ Database connected successfully');
+    
+    // Start Express server
+    app.listen(PORT, () => {
+      logger.info(`🏥 Hospital Federated Learning Backend started on port ${PORT}`);
+      logger.info(`🌐 Hospital ID: ${process.env.HOSPITAL_ID}`);
+      logger.info(`📊 Environment: ${process.env.NODE_ENV}`);
+      logger.info(`🔗 Health check: http://localhost:${PORT}/health`);
+    });
+  } catch (error) {
+    logger.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+// Start the server
+startServer();
 
 module.exports = app;

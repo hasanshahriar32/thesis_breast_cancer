@@ -53,6 +53,44 @@ class BlobStorageService {
   }
 
   /**
+   * Upload a buffer directly to Vercel Blob Storage (no local file needed)
+   * @param {Buffer} buffer - Buffer to upload
+   * @param {string} blobPath - Path in blob storage (e.g., 'patients/xray-123.png')
+   * @returns {Promise<Object>} - Blob metadata including URL
+   */
+  async uploadBuffer(buffer, blobPath) {
+    try {
+      const token = this.getToken();
+      if (!token) {
+        throw new Error('Vercel Blob token not configured');
+      }
+
+      logger.info(`Uploading buffer to Vercel Blob: ${blobPath}`);
+
+      // Upload buffer directly to Vercel Blob
+      const blob = await put(blobPath, buffer, {
+        access: 'public',
+        token: token,
+        addRandomSuffix: true, // Ensures unique URLs and prevents overwrites
+      });
+
+      logger.info(`✓ Buffer uploaded to Vercel Blob: ${blob.url}`);
+
+      return {
+        url: blob.url,
+        downloadUrl: blob.downloadUrl,
+        pathname: blob.pathname,
+        size: blob.size,
+        uploadedAt: blob.uploadedAt,
+      };
+
+    } catch (error) {
+      logger.error(`Failed to upload buffer to Vercel Blob: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
    * Upload multiple files to Vercel Blob Storage
    * @param {Array<{filePath: string, blobPath: string}>} files - Array of file upload configs
    * @returns {Promise<Array<Object>>} - Array of blob metadata

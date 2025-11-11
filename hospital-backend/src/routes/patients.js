@@ -11,18 +11,8 @@ const encryptionService = require('../services/encryption');
 const patientService = require('../services/patient');
 const blobStorage = require('../services/blobStorage');
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: async (req, file, cb) => {
-    const uploadDir = path.join(__dirname, '../../uploads/patients');
-    await fs.mkdir(uploadDir, { recursive: true });
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
+// Configure multer for in-memory file uploads (no local storage)
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage: storage,
@@ -262,7 +252,7 @@ router.delete('/:patientId', async (req, res) => {
   }
 });
 
-// Helper function to process uploaded files
+// Helper function to process uploaded files (in-memory, no local storage)
 async function processPatientFiles(files, metadata, patientId) {
   const processedFiles = {};
   const extractedFeatures = {};
@@ -274,30 +264,61 @@ async function processPatientFiles(files, metadata, patientId) {
     processedFiles[modality] = [];
     
     for (const file of fileList) {
+      // Calculate checksum from buffer
+      const checksum = calculateBufferChecksum(file.buffer);
+      
       const processedFile = {
         original_name: file.originalname,
-        filename: file.filename,
-        path: file.path,
+        filename: `${modality}-${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(file.originalname)}`,
         size: file.size,
         upload_date: new Date().toISOString(),
-        checksum: await calculateFileChecksum(file.path)
+        checksum: checksum
       };
       
-      // Encrypt sensitive file if required
+      // Encrypt and upload to Vercel Blob Storage
       if (process.env.ENCRYPT_FILES === 'true') {
-        const encryptedPath = await encryptionService.encryptFile(file.path);
-        processedFile.encrypted_path = encryptedPath;
-        processedFile.encrypted = true;
-        
-        // Upload encrypted file to Vercel Blob Storage
         try {
+          // Encrypt the file buffer
+          const encryptedData = await encryptionService.encryptBuffer(file.buffer);
+          
+          processedFile.encrypted_path = {
+            original_size: file.size,
+            encrypted_size: encryptedData.encryptedBuffer.length,
+            checksum: encryptedData.checksum,
+            encryption_timestamp: new Date().toISOString()
+          };
+          processedFile.encrypted = true;
+          
+          // Upload encrypted buffer directly to Vercel Blob Storage
           const blobPath = `patients/${patientId}/${modality}-${Date.now()}.encrypted`;
-          const blobResult = await blobStorage.uploadFile(
-            encryptedPath.encrypted_path,
+          const blobResult = await blobStorage.uploadBuffer(
+            encryptedData.encryptedBuffer,
             blobPath
           );
           
-          // Store Vercel Blob URL instead of local path
+          // Store Vercel Blob URL (primary storage)
+          processedFile.blob_storage = {
+            url: blobResult.url,
+            downloadUrl: blobResult.downloadUrl,
+            pathname: blobResult.pathname,
+            size: blobResult.size,
+            uploadedAt: blobResult.uploadedAt
+          };
+          
+          logger.info(`✓ Uploaded encrypted ${modality} to Vercel Blob: ${blobResult.url}`);
+        } catch (error) {
+          logger.error(`Failed to encrypt/upload ${modality} to Vercel Blob:`, error.message);
+          throw error; // Fail if blob storage fails - it's the primary storage now
+        }
+      } else {
+        // Upload unencrypted file directly to Vercel Blob Storage
+        try {
+          const blobPath = `patients/${patientId}/${modality}-${Date.now()}${path.extname(file.originalname)}`;
+          const blobResult = await blobStorage.uploadBuffer(
+            file.buffer,
+            blobPath
+          );
+          
           processedFile.blob_storage = {
             url: blobResult.url,
             downloadUrl: blobResult.downloadUrl,
@@ -309,16 +330,16 @@ async function processPatientFiles(files, metadata, patientId) {
           logger.info(`✓ Uploaded ${modality} to Vercel Blob: ${blobResult.url}`);
         } catch (error) {
           logger.error(`Failed to upload ${modality} to Vercel Blob:`, error.message);
-          // Continue without blob storage if upload fails
+          throw error;
         }
       }
       
       processedFiles[modality].push(processedFile);
     }
     
-    // Extract features for this modality
+    // Extract features for this modality using in-memory buffers
     try {
-      const features = await featureExtractor.extractModalityFeatures(fileList, modality);
+      const features = await featureExtractor.extractModalityFeaturesFromBuffers(fileList, modality);
       extractedFeatures[modality] = features;
     } catch (error) {
       logger.warn(`Failed to extract features for ${modality}:`, error.message);
@@ -331,11 +352,10 @@ async function processPatientFiles(files, metadata, patientId) {
   };
 }
 
-// Helper function to calculate file checksum
-async function calculateFileChecksum(filePath) {
-  const fileBuffer = await fs.readFile(filePath);
+// Helper function to calculate buffer checksum
+function calculateBufferChecksum(buffer) {
   const hashSum = crypto.createHash('sha256');
-  hashSum.update(fileBuffer);
+  hashSum.update(buffer);
   return hashSum.digest('hex');
 }
 

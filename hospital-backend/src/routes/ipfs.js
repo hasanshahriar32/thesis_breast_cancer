@@ -16,10 +16,9 @@ router.post('/upload-patient/:patientId', async (req, res) => {
 
     // 1. Connect to database and find patient directly
     const patientServiceInstance = require('../services/patient');
-    await patientServiceInstance.connect();
     
     const patient = await patientServiceInstance.collection.findOne({ 
-      'metadata.patientId': patientId 
+      id: patientId  // Use the generated UUID instead of metadata.patientId
     });
     
     if (!patient) {
@@ -85,7 +84,7 @@ router.post('/upload-patient/:patientId', async (req, res) => {
 
     // 4. Update patient record with IPFS CIDs
     await patientServiceInstance.collection.updateOne(
-      { 'metadata.patientId': patientId },
+      { id: patientId },  // Use the UUID instead of metadata.patientId
       {
         $set: {
           'files.xray.0.ipfs_cid': ipfsCids.xray,
