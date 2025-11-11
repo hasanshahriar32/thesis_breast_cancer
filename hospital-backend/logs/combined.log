@@ -1012,3 +1012,129 @@
 {"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mMock IPFS: Added data with hash Qmgxuroaqn9ywsc6viuy402ca9hywgyv5p6\u001b[39m","timestamp":"2025-11-12 03:33:11:3311"}
 {"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ Ultrasound uploaded to IPFS: Qmgxuroaqn9ywsc6viuy402ca9hywgyv5p6\u001b[39m","timestamp":"2025-11-12 03:33:11:3311"}
 {"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✅ Successfully uploaded patient 5f52c851-1a47-47bd-84c6-41a2099a0ad3 to IPFS\u001b[39m","timestamp":"2025-11-12 03:33:11:3311"}
+{"level":"\u001b[33mwarn\u001b[39m","message":"\u001b[33mNo encryption key found in environment, generating new key\u001b[39m","timestamp":"2025-11-12 03:36:14:3614"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mGenerated encryption key: 3476f627322ad6c84118c26b12405bdf15cc4370b17d5b283c5af86edf6b6452\u001b[39m","timestamp":"2025-11-12 03:36:14:3614"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mInitializing database connection...\u001b[39m","timestamp":"2025-11-12 03:36:15:3615"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mConnecting to MongoDB...\u001b[39m","timestamp":"2025-11-12 03:36:15:3615"}
+{"level":"\u001b[33mwarn\u001b[39m","message":"\u001b[33mNo encryption key found in environment, generating new key\u001b[39m","timestamp":"2025-11-12 03:36:28:3628"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mGenerated encryption key: 688c22a49de798f12947bce5989dbdbe633b59217b4c421a1cfff10caad615da\u001b[39m","timestamp":"2025-11-12 03:36:28:3628"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mInitializing database connection...\u001b[39m","timestamp":"2025-11-12 03:36:29:3629"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mConnecting to MongoDB...\u001b[39m","timestamp":"2025-11-12 03:36:29:3629"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ Database indexes created\u001b[39m","timestamp":"2025-11-12 03:36:41:3641"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ Connected to MongoDB successfully\u001b[39m","timestamp":"2025-11-12 03:36:41:3641"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ Database connected successfully\u001b[39m","timestamp":"2025-11-12 03:36:41:3641"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m🏥 Hospital Federated Learning Backend started on port 3000\u001b[39m","timestamp":"2025-11-12 03:36:41:3641"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m🌐 Hospital ID: 4\u001b[39m","timestamp":"2025-11-12 03:36:41:3641"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m📊 Environment: development\u001b[39m","timestamp":"2025-11-12 03:36:41:3641"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m🔗 Health check: http://localhost:3000/health\u001b[39m","timestamp":"2025-11-12 03:36:41:3641"}
+{"level":"\u001b[33mwarn\u001b[39m","message":"\u001b[33mNo encryption key found in environment, generating new key\u001b[39m","timestamp":"2025-11-12 03:43:28:4328"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mGenerated encryption key: 570fbbee06df3164e07240412eaf81d677a0ca0d1f1d3f3c56beec54aadfa729\u001b[39m","timestamp":"2025-11-12 03:43:28:4328"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mInitializing database connection...\u001b[39m","timestamp":"2025-11-12 03:43:29:4329"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mConnecting to MongoDB...\u001b[39m","timestamp":"2025-11-12 03:43:29:4329"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ Database indexes created\u001b[39m","timestamp":"2025-11-12 03:43:32:4332"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ Connected to MongoDB successfully\u001b[39m","timestamp":"2025-11-12 03:43:32:4332"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ Database connected successfully\u001b[39m","timestamp":"2025-11-12 03:43:32:4332"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m🏥 Hospital Federated Learning Backend started on port 3000\u001b[39m","timestamp":"2025-11-12 03:43:32:4332"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m🌐 Hospital ID: 4\u001b[39m","timestamp":"2025-11-12 03:43:32:4332"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m📊 Environment: development\u001b[39m","timestamp":"2025-11-12 03:43:32:4332"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m🔗 Health check: http://localhost:3000/health\u001b[39m","timestamp":"2025-11-12 03:43:32:4332"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mStarting IPFS upload for patient: 5f52c851-1a47-47bd-84c6-41a2099a0ad3\u001b[39m","timestamp":"2025-11-12 03:43:38:4338"}
+{"level":"\u001b[33mwarn\u001b[39m","message":"\u001b[33mNo Pinata credentials found\u001b[39m","timestamp":"2025-11-12 03:43:38:4338"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mConnecting to IPFS: http://localhost:5001\u001b[39m","timestamp":"2025-11-12 03:43:38:4338"}
+{"level":"\u001b[31merror\u001b[39m","message":"\u001b[31mFailed to connect to local IPFS:\u001b[39m","timestamp":"2025-11-12 03:43:38:4338"}
+{"level":"\u001b[33mwarn\u001b[39m","message":"\u001b[33mIPFS unavailable, using mock mode\u001b[39m","timestamp":"2025-11-12 03:43:38:4338"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mDownloading from Vercel Blob: https://ym58rk9cpdeglu7z.public.blob.vercel-storage.com/patients/5f52c851-1a47-47bd-84c6-41a2099a0ad3/xray-1762896581122-MzlQLEAP2jKxjaeF6t82qS8AFIB45O.encrypted\u001b[39m","timestamp":"2025-11-12 03:43:38:4338"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mMock IPFS: Added data with hash Qmiu24FkmwneiptYzg8xMjmYWSCWwwi4jjrqgVRDKbIQ\u001b[39m","timestamp":"2025-11-12 03:43:40:4340"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ X-Ray uploaded to IPFS: Qmiu24FkmwneiptYzg8xMjmYWSCWwwi4jjrqgVRDKbIQ\u001b[39m","timestamp":"2025-11-12 03:43:40:4340"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mDownloading from Vercel Blob: https://ym58rk9cpdeglu7z.public.blob.vercel-storage.com/patients/5f52c851-1a47-47bd-84c6-41a2099a0ad3/histopathology-1762896583798-FdqlW5subEJGEGixZbdLQ9nDQnpdnL.encrypted\u001b[39m","timestamp":"2025-11-12 03:43:40:4340"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mMock IPFS: Added data with hash QmiaKeCxE4MKpYggNkA0HuqNdbSRVNCjvRmm93pa46jg\u001b[39m","timestamp":"2025-11-12 03:43:42:4342"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ Histopathology uploaded to IPFS: QmiaKeCxE4MKpYggNkA0HuqNdbSRVNCjvRmm93pa46jg\u001b[39m","timestamp":"2025-11-12 03:43:42:4342"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mDownloading from Vercel Blob: https://ym58rk9cpdeglu7z.public.blob.vercel-storage.com/patients/5f52c851-1a47-47bd-84c6-41a2099a0ad3/ultrasound-1762896584634-m1GJZq8RqfKQvrz1C768zsOcQME1sV.encrypted\u001b[39m","timestamp":"2025-11-12 03:43:42:4342"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mMock IPFS: Added data with hash QmojVwA0Uujed4OT6hoXm70kkR4NtTcXSyvIHN91mNeB8\u001b[39m","timestamp":"2025-11-12 03:43:42:4342"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ Ultrasound uploaded to IPFS: QmojVwA0Uujed4OT6hoXm70kkR4NtTcXSyvIHN91mNeB8\u001b[39m","timestamp":"2025-11-12 03:43:42:4342"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✅ Successfully uploaded patient 5f52c851-1a47-47bd-84c6-41a2099a0ad3 to IPFS\u001b[39m","timestamp":"2025-11-12 03:43:42:4342"}
+{"level":"\u001b[33mwarn\u001b[39m","message":"\u001b[33mNo encryption key found in environment, generating new key\u001b[39m","timestamp":"2025-11-12 03:47:25:4725"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mGenerated encryption key: d547234d630ed7e9d077c1797b386e34b9065f1510a161b90944958c5026a3cd\u001b[39m","timestamp":"2025-11-12 03:47:25:4725"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mInitializing database connection...\u001b[39m","timestamp":"2025-11-12 03:47:25:4725"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mConnecting to MongoDB...\u001b[39m","timestamp":"2025-11-12 03:47:25:4725"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ Database indexes created\u001b[39m","timestamp":"2025-11-12 03:47:28:4728"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ Connected to MongoDB successfully\u001b[39m","timestamp":"2025-11-12 03:47:28:4728"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ Database connected successfully\u001b[39m","timestamp":"2025-11-12 03:47:28:4728"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m🏥 Hospital Federated Learning Backend started on port 3000\u001b[39m","timestamp":"2025-11-12 03:47:28:4728"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m🌐 Hospital ID: 4\u001b[39m","timestamp":"2025-11-12 03:47:28:4728"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m📊 Environment: development\u001b[39m","timestamp":"2025-11-12 03:47:28:4728"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m🔗 Health check: http://localhost:3000/health\u001b[39m","timestamp":"2025-11-12 03:47:28:4728"}
+{"level":"\u001b[33mwarn\u001b[39m","message":"\u001b[33mNo encryption key found in environment, generating new key\u001b[39m","timestamp":"2025-11-12 03:47:45:4745"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mGenerated encryption key: 582bff8b157dd18af399310aa8ded4e5f984513afcf5e59d758e6ecbd71a397c\u001b[39m","timestamp":"2025-11-12 03:47:45:4745"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mInitializing database connection...\u001b[39m","timestamp":"2025-11-12 03:47:45:4745"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mConnecting to MongoDB...\u001b[39m","timestamp":"2025-11-12 03:47:45:4745"}
+{"level":"\u001b[33mwarn\u001b[39m","message":"\u001b[33mNo encryption key found in environment, generating new key\u001b[39m","timestamp":"2025-11-12 03:47:47:4747"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mGenerated encryption key: 770a74530b0163859420808e77d804371ff7cbd8695951f82f43b002b8a7274c\u001b[39m","timestamp":"2025-11-12 03:47:47:4747"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mInitializing database connection...\u001b[39m","timestamp":"2025-11-12 03:47:47:4747"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mConnecting to MongoDB...\u001b[39m","timestamp":"2025-11-12 03:47:47:4747"}
+{"level":"\u001b[33mwarn\u001b[39m","message":"\u001b[33mNo encryption key found in environment, generating new key\u001b[39m","timestamp":"2025-11-12 03:47:48:4748"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mGenerated encryption key: 6bf5aa4e3abcc3e4b2d15ba9a6285d071920e21f94de5623bee36e2f6bebb300\u001b[39m","timestamp":"2025-11-12 03:47:48:4748"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mInitializing database connection...\u001b[39m","timestamp":"2025-11-12 03:47:49:4749"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mConnecting to MongoDB...\u001b[39m","timestamp":"2025-11-12 03:47:49:4749"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ Database indexes created\u001b[39m","timestamp":"2025-11-12 03:47:51:4751"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ Connected to MongoDB successfully\u001b[39m","timestamp":"2025-11-12 03:47:51:4751"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ Database connected successfully\u001b[39m","timestamp":"2025-11-12 03:47:51:4751"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m🏥 Hospital Federated Learning Backend started on port 3000\u001b[39m","timestamp":"2025-11-12 03:47:51:4751"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m🌐 Hospital ID: 4\u001b[39m","timestamp":"2025-11-12 03:47:51:4751"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m📊 Environment: development\u001b[39m","timestamp":"2025-11-12 03:47:51:4751"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m🔗 Health check: http://localhost:3000/health\u001b[39m","timestamp":"2025-11-12 03:47:51:4751"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ IPFS connection closed\u001b[39m","timestamp":"2025-11-12 03:48:38:4838"}
+{"level":"\u001b[33mwarn\u001b[39m","message":"\u001b[33mNo encryption key found in environment, generating new key\u001b[39m","timestamp":"2025-11-12 03:48:42:4842"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mGenerated encryption key: c2c03d2a53712fbffaf372ab550d4778aff069574364113af473f885d9bb830d\u001b[39m","timestamp":"2025-11-12 03:48:42:4842"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mInitializing database connection...\u001b[39m","timestamp":"2025-11-12 03:48:43:4843"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mConnecting to MongoDB...\u001b[39m","timestamp":"2025-11-12 03:48:43:4843"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ Database indexes created\u001b[39m","timestamp":"2025-11-12 03:48:45:4845"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ Connected to MongoDB successfully\u001b[39m","timestamp":"2025-11-12 03:48:45:4845"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ Database connected successfully\u001b[39m","timestamp":"2025-11-12 03:48:45:4845"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m🏥 Hospital Federated Learning Backend started on port 3000\u001b[39m","timestamp":"2025-11-12 03:48:45:4845"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m🌐 Hospital ID: 4\u001b[39m","timestamp":"2025-11-12 03:48:45:4845"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m📊 Environment: development\u001b[39m","timestamp":"2025-11-12 03:48:45:4845"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m🔗 Health check: http://localhost:3000/health\u001b[39m","timestamp":"2025-11-12 03:48:45:4845"}
+{"level":"\u001b[33mwarn\u001b[39m","message":"\u001b[33mNo encryption key found in environment, generating new key\u001b[39m","timestamp":"2025-11-12 03:49:05:495"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mGenerated encryption key: b508c2fd9da53484e92d90f4336cbcbe03e6a898a0dd668be3e7c2a4090c53c7\u001b[39m","timestamp":"2025-11-12 03:49:05:495"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mInitializing database connection...\u001b[39m","timestamp":"2025-11-12 03:49:06:496"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mConnecting to MongoDB...\u001b[39m","timestamp":"2025-11-12 03:49:06:496"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ IPFS connection closed\u001b[39m","timestamp":"2025-11-12 03:49:06:496"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ Database indexes created\u001b[39m","timestamp":"2025-11-12 03:49:08:498"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ Connected to MongoDB successfully\u001b[39m","timestamp":"2025-11-12 03:49:08:498"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ Database connected successfully\u001b[39m","timestamp":"2025-11-12 03:49:08:498"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m🏥 Hospital Federated Learning Backend started on port 3000\u001b[39m","timestamp":"2025-11-12 03:49:08:498"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m🌐 Hospital ID: 4\u001b[39m","timestamp":"2025-11-12 03:49:08:498"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m📊 Environment: development\u001b[39m","timestamp":"2025-11-12 03:49:08:498"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m🔗 Health check: http://localhost:3000/health\u001b[39m","timestamp":"2025-11-12 03:49:08:498"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mStarting IPFS upload for patient: 5f52c851-1a47-47bd-84c6-41a2099a0ad3\u001b[39m","timestamp":"2025-11-12 03:49:14:4914"}
+{"level":"\u001b[33mwarn\u001b[39m","message":"\u001b[33mNo Pinata credentials found\u001b[39m","timestamp":"2025-11-12 03:49:14:4914"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mConnecting to IPFS: http://localhost:5001\u001b[39m","timestamp":"2025-11-12 03:49:14:4914"}
+{"level":"\u001b[31merror\u001b[39m","message":"\u001b[31mFailed to connect to local IPFS:\u001b[39m","timestamp":"2025-11-12 03:49:14:4914"}
+{"level":"\u001b[33mwarn\u001b[39m","message":"\u001b[33mIPFS unavailable, using mock mode\u001b[39m","timestamp":"2025-11-12 03:49:14:4914"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mDownloading from Vercel Blob: https://ym58rk9cpdeglu7z.public.blob.vercel-storage.com/patients/5f52c851-1a47-47bd-84c6-41a2099a0ad3/xray-1762896581122-MzlQLEAP2jKxjaeF6t82qS8AFIB45O.encrypted\u001b[39m","timestamp":"2025-11-12 03:49:14:4914"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mMock IPFS: Added data with hash QmtMoUlVlu0iy4LIL6B2QYSh7a66ne6EcWMxnTZfRkwU8\u001b[39m","timestamp":"2025-11-12 03:49:14:4914"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ X-Ray uploaded to IPFS: QmtMoUlVlu0iy4LIL6B2QYSh7a66ne6EcWMxnTZfRkwU8\u001b[39m","timestamp":"2025-11-12 03:49:14:4914"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mDownloading from Vercel Blob: https://ym58rk9cpdeglu7z.public.blob.vercel-storage.com/patients/5f52c851-1a47-47bd-84c6-41a2099a0ad3/histopathology-1762896583798-FdqlW5subEJGEGixZbdLQ9nDQnpdnL.encrypted\u001b[39m","timestamp":"2025-11-12 03:49:14:4914"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mMock IPFS: Added data with hash QmCRAjRXMHhjt6wwEoLLAGhczV2hsPbaKNl029s0AuYI\u001b[39m","timestamp":"2025-11-12 03:49:15:4915"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ Histopathology uploaded to IPFS: QmCRAjRXMHhjt6wwEoLLAGhczV2hsPbaKNl029s0AuYI\u001b[39m","timestamp":"2025-11-12 03:49:15:4915"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mDownloading from Vercel Blob: https://ym58rk9cpdeglu7z.public.blob.vercel-storage.com/patients/5f52c851-1a47-47bd-84c6-41a2099a0ad3/ultrasound-1762896584634-m1GJZq8RqfKQvrz1C768zsOcQME1sV.encrypted\u001b[39m","timestamp":"2025-11-12 03:49:15:4915"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mMock IPFS: Added data with hash QmN22Tnf7ss1p9N7qpw4pooy1p7dVzOHz0fIDuNpJJQ\u001b[39m","timestamp":"2025-11-12 03:49:15:4915"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ Ultrasound uploaded to IPFS: QmN22Tnf7ss1p9N7qpw4pooy1p7dVzOHz0fIDuNpJJQ\u001b[39m","timestamp":"2025-11-12 03:49:15:4915"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✅ Successfully uploaded patient 5f52c851-1a47-47bd-84c6-41a2099a0ad3 to IPFS\u001b[39m","timestamp":"2025-11-12 03:49:15:4915"}
+{"level":"\u001b[33mwarn\u001b[39m","message":"\u001b[33mNo encryption key found in environment, generating new key\u001b[39m","timestamp":"2025-11-12 03:49:21:4921"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mGenerated encryption key: e586696dc8a568e8303db70a20d214237f18b5a20120c7a24ac0ca5795074632\u001b[39m","timestamp":"2025-11-12 03:49:21:4921"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mInitializing database connection...\u001b[39m","timestamp":"2025-11-12 03:49:22:4922"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mConnecting to MongoDB...\u001b[39m","timestamp":"2025-11-12 03:49:22:4922"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ Database indexes created\u001b[39m","timestamp":"2025-11-12 03:49:24:4924"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mStarting IPFS upload for patient: 5f52c851-1a47-47bd-84c6-41a2099a0ad3\u001b[39m","timestamp":"2025-11-12 03:49:34:4934"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mDownloading from Vercel Blob: https://ym58rk9cpdeglu7z.public.blob.vercel-storage.com/patients/5f52c851-1a47-47bd-84c6-41a2099a0ad3/xray-1762896581122-MzlQLEAP2jKxjaeF6t82qS8AFIB45O.encrypted\u001b[39m","timestamp":"2025-11-12 03:49:34:4934"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mMock IPFS: Added data with hash QmOP8QcuZHXZwEMpTQtZPVmMbr5cWQRopPc5bqMNXTXU\u001b[39m","timestamp":"2025-11-12 03:49:34:4934"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ X-Ray uploaded to IPFS: QmOP8QcuZHXZwEMpTQtZPVmMbr5cWQRopPc5bqMNXTXU\u001b[39m","timestamp":"2025-11-12 03:49:34:4934"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mDownloading from Vercel Blob: https://ym58rk9cpdeglu7z.public.blob.vercel-storage.com/patients/5f52c851-1a47-47bd-84c6-41a2099a0ad3/histopathology-1762896583798-FdqlW5subEJGEGixZbdLQ9nDQnpdnL.encrypted\u001b[39m","timestamp":"2025-11-12 03:49:34:4934"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mMock IPFS: Added data with hash QmEXFe50Pg7FRh7sHy0LfRQvLpQRWCCQzah9oLztoTB8\u001b[39m","timestamp":"2025-11-12 03:49:35:4935"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ Histopathology uploaded to IPFS: QmEXFe50Pg7FRh7sHy0LfRQvLpQRWCCQzah9oLztoTB8\u001b[39m","timestamp":"2025-11-12 03:49:35:4935"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mDownloading from Vercel Blob: https://ym58rk9cpdeglu7z.public.blob.vercel-storage.com/patients/5f52c851-1a47-47bd-84c6-41a2099a0ad3/ultrasound-1762896584634-m1GJZq8RqfKQvrz1C768zsOcQME1sV.encrypted\u001b[39m","timestamp":"2025-11-12 03:49:35:4935"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32mMock IPFS: Added data with hash QmUaxM3Cg4iCWUuNOdmxxQpPZbozxBhLBzleP4msWgr4\u001b[39m","timestamp":"2025-11-12 03:49:35:4935"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✓ Ultrasound uploaded to IPFS: QmUaxM3Cg4iCWUuNOdmxxQpPZbozxBhLBzleP4msWgr4\u001b[39m","timestamp":"2025-11-12 03:49:35:4935"}
+{"level":"\u001b[32minfo\u001b[39m","message":"\u001b[32m✅ Successfully uploaded patient 5f52c851-1a47-47bd-84c6-41a2099a0ad3 to IPFS\u001b[39m","timestamp":"2025-11-12 03:49:35:4935"}

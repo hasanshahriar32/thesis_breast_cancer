@@ -1,7 +1,10 @@
+// Load environment variables FIRST
+const dotenv = require('dotenv');
+dotenv.config();
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const dotenv = require('dotenv');
 const path = require('path');
 
 const logger = require('./utils/logger');
@@ -13,9 +16,6 @@ const ipfsRoutes = require('./routes/ipfs');
 const featuresRoutes = require('./routes/features');
 const setupSwagger = require('./config/swagger');
 const patientService = require('./services/patient');
-
-// Load environment variables
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;

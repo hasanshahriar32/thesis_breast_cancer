@@ -11,11 +11,7 @@ class IPFSService {
     this.client = null;
     this.isConnected = false;
     this.usePinata = false;
-    this.pinataConfig = {
-      apiKey: process.env.PINATA_API_KEY,
-      secretApiKey: process.env.PINATA_SECRET_API_KEY,
-      jwt: process.env.PINATA_JWT
-    };
+    this.pinataConfig = null; // Load dynamically in connect()
     this.config = {
       host: process.env.IPFS_HOST || 'localhost',
       port: process.env.IPFS_PORT || 5001,
@@ -26,17 +22,35 @@ class IPFSService {
   async connect() {
     if (this.isConnected) return;
 
+    // Load Pinata config dynamically when connecting
+    this.pinataConfig = {
+      apiKey: process.env.PINATA_API_KEY,
+      secretApiKey: process.env.PINATA_SECRET_API_KEY,
+      jwt: process.env.PINATA_JWT
+    };
+
+    logger.info(`Pinata JWT loaded: ${this.pinataConfig.jwt ? 'YES' : 'NO'}`);
+    logger.info(`Pinata JWT length: ${this.pinataConfig.jwt ? this.pinataConfig.jwt.length : 0}`);
+
     // Check if Pinata credentials are available - prioritize Pinata over local IPFS
     if (this.pinataConfig.jwt || (this.pinataConfig.apiKey && this.pinataConfig.secretApiKey)) {
-      logger.info('Using Pinata cloud IPFS service');
-      this.usePinata = true;
-      this.isConnected = true;
-      
-      logger.info('✓ Pinata credentials found, using real IPFS uploads');
-      return;
+      try {
+        logger.info('Testing Pinata connection...');
+        await this.testPinataConnection();
+        logger.info('✓ Pinata connection successful');
+        this.usePinata = true;
+        this.isConnected = true;
+        logger.info('✓ Using Pinata cloud IPFS service');
+        return;
+      } catch (error) {
+        logger.error('Pinata connection failed:', error.message);
+        logger.warn('Falling back to mock IPFS client');
+      }
+    } else {
+      logger.warn('No Pinata credentials found');
     }
 
-    // Try local IPFS node only if no Pinata credentials
+    // Try local IPFS node only if no Pinata credentials or Pinata failed
     try {
       logger.info(`Connecting to IPFS: ${this.config.protocol}://${this.config.host}:${this.config.port}`);
       
@@ -55,7 +69,7 @@ class IPFSService {
       this.isConnected = true;
 
     } catch (error) {
-      logger.error('Failed to connect to IPFS:', error);
+      logger.error('Failed to connect to local IPFS:', error.message);
       
       // Fall back to mock mode for development
       logger.warn('IPFS unavailable, using mock mode');
@@ -131,12 +145,13 @@ class IPFSService {
   }
 
   createMockClient() {
+    const crypto = require('crypto');
     // Mock IPFS client for development/testing
     return {
       add: async (data) => {
         // Generate a proper IPFS CID v0 format (46 characters starting with Qm)
-        const randomPart = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
-        const hash = `Qm${randomPart.substring(0, 44)}`;
+        const randomBytes = crypto.randomBytes(32);
+        const hash = `Qm${randomBytes.toString('base64').replace(/[+/=]/g, '').substring(0, 44)}`;
         logger.info(`Mock IPFS: Added data with hash ${hash}`);
         return { cid: hash, size: JSON.stringify(data).length };
       },
