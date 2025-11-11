@@ -9,6 +9,7 @@ const logger = require('../utils/logger');
 const featureExtractor = require('../services/featureExtractor');
 const encryptionService = require('../services/encryption');
 const patientService = require('../services/patient');
+const blobStorage = require('../services/blobStorage');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -72,10 +73,25 @@ router.post('/upload', upload.fields([
       hospital_id: process.env.HOSPITAL_ID
     });
     
+    // Format response with Vercel Blob URLs prominently
+    const fileUrls = {};
+    for (const [modality, files] of Object.entries(processedData.files)) {
+      if (files && files.length > 0 && files[0].blob_storage) {
+        fileUrls[modality] = {
+          url: files[0].blob_storage.url,
+          downloadUrl: files[0].blob_storage.downloadUrl,
+          encrypted: files[0].encrypted || false,
+          size: files[0].size,
+          checksum: files[0].checksum
+        };
+      }
+    }
+    
     res.status(201).json({
       success: true,
       patient_id: patientId,
-      processed_files: Object.keys(processedData.files).length,
+      metadata: metadata,
+      file_urls: fileUrls,
       features_extracted: processedData.features ? Object.keys(processedData.features).length : 0,
       message: 'Patient data uploaded and processed successfully'
     });
@@ -137,9 +153,36 @@ router.get('/:patientId', async (req, res) => {
       return res.status(404).json({ error: 'Patient not found' });
     }
     
+    // Format response with clean Vercel Blob URLs
+    const formattedPatient = {
+      patient_id: patient.id,
+      metadata: patient.metadata,
+      file_urls: {},
+      features: include_features === 'true' ? patient.features : undefined,
+      hospital_id: patient.hospital_id,
+      created_at: patient.created_at,
+      updated_at: patient.updated_at,
+      status: patient.status
+    };
+    
+    // Extract clean Vercel Blob URLs
+    if (patient.files) {
+      for (const [modality, files] of Object.entries(patient.files)) {
+        if (files && files.length > 0 && files[0].blob_storage) {
+          formattedPatient.file_urls[modality] = {
+            url: files[0].blob_storage.url,
+            downloadUrl: files[0].blob_storage.downloadUrl,
+            encrypted: files[0].encrypted || false,
+            size: files[0].size,
+            checksum: files[0].checksum
+          };
+        }
+      }
+    }
+    
     res.json({
       success: true,
-      patient
+      patient: formattedPatient
     });
     
   } catch (error) {
@@ -245,6 +288,29 @@ async function processPatientFiles(files, metadata, patientId) {
         const encryptedPath = await encryptionService.encryptFile(file.path);
         processedFile.encrypted_path = encryptedPath;
         processedFile.encrypted = true;
+        
+        // Upload encrypted file to Vercel Blob Storage
+        try {
+          const blobPath = `patients/${patientId}/${modality}-${Date.now()}.encrypted`;
+          const blobResult = await blobStorage.uploadFile(
+            encryptedPath.encrypted_path,
+            blobPath
+          );
+          
+          // Store Vercel Blob URL instead of local path
+          processedFile.blob_storage = {
+            url: blobResult.url,
+            downloadUrl: blobResult.downloadUrl,
+            pathname: blobResult.pathname,
+            size: blobResult.size,
+            uploadedAt: blobResult.uploadedAt
+          };
+          
+          logger.info(`✓ Uploaded ${modality} to Vercel Blob: ${blobResult.url}`);
+        } catch (error) {
+          logger.error(`Failed to upload ${modality} to Vercel Blob:`, error.message);
+          // Continue without blob storage if upload fails
+        }
       }
       
       processedFiles[modality].push(processedFile);

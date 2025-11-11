@@ -26,24 +26,17 @@ class IPFSService {
   async connect() {
     if (this.isConnected) return;
 
-    // Check if Pinata credentials are available
+    // Check if Pinata credentials are available - prioritize Pinata over local IPFS
     if (this.pinataConfig.jwt || (this.pinataConfig.apiKey && this.pinataConfig.secretApiKey)) {
       logger.info('Using Pinata cloud IPFS service');
       this.usePinata = true;
       this.isConnected = true;
       
-      // Test Pinata connection
-      try {
-        await this.testPinataConnection();
-        logger.info('✓ Connected to Pinata IPFS service');
-      } catch (error) {
-        logger.warn('Pinata connection test failed, using mock mode:', error.message);
-        this.client = this.createMockClient();
-      }
+      logger.info('✓ Pinata credentials found, using real IPFS uploads');
       return;
     }
 
-    // Try local IPFS node
+    // Try local IPFS node only if no Pinata credentials
     try {
       logger.info(`Connecting to IPFS: ${this.config.protocol}://${this.config.host}:${this.config.port}`);
       
@@ -58,6 +51,7 @@ class IPFSService {
       const version = await this.client.version();
       logger.info(`✓ Connected to IPFS node version: ${version.version}`);
       
+      this.usePinata = false;
       this.isConnected = true;
 
     } catch (error) {
@@ -66,6 +60,7 @@ class IPFSService {
       // Fall back to mock mode for development
       logger.warn('IPFS unavailable, using mock mode');
       this.client = this.createMockClient();
+      this.usePinata = false;
       this.isConnected = true;
     }
   }
@@ -139,7 +134,9 @@ class IPFSService {
     // Mock IPFS client for development/testing
     return {
       add: async (data) => {
-        const hash = `Qm${Math.random().toString(36).substr(2, 44)}`;
+        // Generate a proper IPFS CID v0 format (46 characters starting with Qm)
+        const randomPart = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
+        const hash = `Qm${randomPart.substring(0, 44)}`;
         logger.info(`Mock IPFS: Added data with hash ${hash}`);
         return { cid: hash, size: JSON.stringify(data).length };
       },

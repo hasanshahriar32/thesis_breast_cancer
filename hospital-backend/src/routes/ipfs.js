@@ -5,6 +5,7 @@ const ipfsService = require('../services/ipfs');
 const encryptionService = require('../services/encryption');
 const patientService = require('../services/patient');
 const fs = require('fs').promises;
+const axios = require('axios');
 
 // Upload patient encrypted images to IPFS
 router.post('/upload-patient/:patientId', async (req, res) => {
@@ -28,61 +29,59 @@ router.post('/upload-patient/:patientId', async (req, res) => {
       });
     }
 
-    // 2. Check if files are encrypted
-    if (!patient.files?.xray?.[0]?.encrypted || 
-        !patient.files?.histopathology?.[0]?.encrypted || 
-        !patient.files?.ultrasound?.[0]?.encrypted) {
+    // 2. Check if files have Vercel Blob Storage URLs
+    if (!patient.files?.xray?.[0]?.blob_storage?.url || 
+        !patient.files?.histopathology?.[0]?.blob_storage?.url || 
+        !patient.files?.ultrasound?.[0]?.blob_storage?.url) {
       return res.status(400).json({
         success: false,
-        error: 'All files must be encrypted before IPFS upload'
+        error: 'Patient files must be uploaded to Vercel Blob Storage first'
       });
     }
 
-    // 3. Upload each encrypted file to IPFS
+    // 3. Upload each encrypted file from Vercel Blob to IPFS/Pinata
     await ipfsService.connect();
     const ipfsCids = {};
+    const ipfsGatewayUrls = {};
+    
+    // Helper function to download from Vercel Blob and upload to Pinata
+    const uploadToIPFS = async (blobUrl, filename) => {
+      logger.info(`Downloading from Vercel Blob: ${blobUrl}`);
+      const response = await axios.get(blobUrl, { responseType: 'arraybuffer' });
+      const fileData = Buffer.from(response.data);
+      
+      if (ipfsService.usePinata) {
+        const result = await ipfsService.uploadToPinata(fileData, filename);
+        return result.cid;
+      } else {
+        const result = await ipfsService.client.add(fileData, { pin: true });
+        return result.cid.toString();
+      }
+    };
     
     // Upload X-Ray
-    const xrayEncryptedPath = patient.files.xray[0].encrypted_path.encrypted_path;
-    logger.info(`Uploading X-Ray from: ${xrayEncryptedPath}`);
-    const xrayData = await fs.readFile(xrayEncryptedPath);
-    
-    let xrayResult;
-    if (ipfsService.usePinata) {
-      xrayResult = await ipfsService.uploadToPinata(xrayData, `xray-${patientId}.enc`);
-      ipfsCids.xray = xrayResult.cid;
-    } else {
-      xrayResult = await ipfsService.client.add(xrayData, { pin: true });
-      ipfsCids.xray = xrayResult.cid.toString();
-    }
+    ipfsCids.xray = await uploadToIPFS(
+      patient.files.xray[0].blob_storage.url,
+      `xray-${patientId}.enc`
+    );
+    ipfsGatewayUrls.xray = `${process.env.IPFS_GATEWAY}${ipfsCids.xray}`;
+    logger.info(`✓ X-Ray uploaded to IPFS: ${ipfsCids.xray}`);
     
     // Upload Histopathology
-    const histoEncryptedPath = patient.files.histopathology[0].encrypted_path.encrypted_path;
-    logger.info(`Uploading Histopathology from: ${histoEncryptedPath}`);
-    const histoData = await fs.readFile(histoEncryptedPath);
-    
-    let histoResult;
-    if (ipfsService.usePinata) {
-      histoResult = await ipfsService.uploadToPinata(histoData, `histo-${patientId}.enc`);
-      ipfsCids.histopathology = histoResult.cid;
-    } else {
-      histoResult = await ipfsService.client.add(histoData, { pin: true });
-      ipfsCids.histopathology = histoResult.cid.toString();
-    }
+    ipfsCids.histopathology = await uploadToIPFS(
+      patient.files.histopathology[0].blob_storage.url,
+      `histo-${patientId}.enc`
+    );
+    ipfsGatewayUrls.histopathology = `${process.env.IPFS_GATEWAY}${ipfsCids.histopathology}`;
+    logger.info(`✓ Histopathology uploaded to IPFS: ${ipfsCids.histopathology}`);
     
     // Upload Ultrasound
-    const ultraEncryptedPath = patient.files.ultrasound[0].encrypted_path.encrypted_path;
-    logger.info(`Uploading Ultrasound from: ${ultraEncryptedPath}`);
-    const ultraData = await fs.readFile(ultraEncryptedPath);
-    
-    let ultraResult;
-    if (ipfsService.usePinata) {
-      ultraResult = await ipfsService.uploadToPinata(ultraData, `ultra-${patientId}.enc`);
-      ipfsCids.ultrasound = ultraResult.cid;
-    } else {
-      ultraResult = await ipfsService.client.add(ultraData, { pin: true });
-      ipfsCids.ultrasound = ultraResult.cid.toString();
-    }
+    ipfsCids.ultrasound = await uploadToIPFS(
+      patient.files.ultrasound[0].blob_storage.url,
+      `ultra-${patientId}.enc`
+    );
+    ipfsGatewayUrls.ultrasound = `${process.env.IPFS_GATEWAY}${ipfsCids.ultrasound}`;
+    logger.info(`✓ Ultrasound uploaded to IPFS: ${ipfsCids.ultrasound}`);
 
     // 4. Update patient record with IPFS CIDs
     await patientServiceInstance.collection.updateOne(
@@ -107,11 +106,7 @@ router.post('/upload-patient/:patientId', async (req, res) => {
       message: 'Patient images uploaded to IPFS successfully',
       patientId,
       ipfsCids,
-      ipfsGatewayUrls: {
-        xray: `https://gateway.pinata.cloud/ipfs/${ipfsCids.xray}`,
-        histopathology: `https://gateway.pinata.cloud/ipfs/${ipfsCids.histopathology}`,
-        ultrasound: `https://gateway.pinata.cloud/ipfs/${ipfsCids.ultrasound}`
-      }
+      ipfsGatewayUrls
     });
 
   } catch (error) {

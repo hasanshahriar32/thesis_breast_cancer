@@ -65,7 +65,8 @@ paths:
                 patient_metadata:
                   type: string
                   format: json
-                  description: JSON string of patient metadata.
+                  description: JSON string containing patient metadata conforming to PatientMetadata schema.
+                  example: '{"patientId": "P123456", "age": 45, "diagnosis": "malignant"}'
                 xray:
                   type: string
                   format: binary
@@ -77,7 +78,35 @@ paths:
                   format: binary
       responses:
         '201':
-          description: Patient data created
+          description: Patient data uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  patient_id:
+                    type: string
+                    example: "7dfd5f6f-3ef8-4325-bd85-2bb53ffb1463"
+                  metadata:
+                    $ref: '#/components/schemas/PatientMetadata'
+                  file_urls:
+                    type: object
+                    properties:
+                      xray:
+                        $ref: '#/components/schemas/BlobStorageFile'
+                      histopathology:
+                        $ref: '#/components/schemas/BlobStorageFile'
+                      ultrasound:
+                        $ref: '#/components/schemas/BlobStorageFile'
+                  features_extracted:
+                    type: integer
+                    example: 0
+                  message:
+                    type: string
+                    example: "Patient data uploaded and processed successfully"
         '400':
           $ref: '#/components/responses/BadRequest'
         '500':
@@ -296,6 +325,53 @@ components:
           type: boolean
         hospital:
           $ref: '#/components/schemas/HospitalInfo'
+
+    PatientMetadata:
+      type: object
+      properties:
+        patientId:
+          type: string
+          description: Unique identifier for the patient
+          example: "P123456"
+        age:
+          type: number
+          description: Patient's age in years
+          example: 45
+        diagnosis:
+          type: string
+          description: Medical diagnosis result
+          enum: ["malignant", "benign"]
+          example: "malignant"
+      required:
+        - patientId
+        - age
+        - diagnosis
+
+    BlobStorageFile:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          description: Public URL to access the file on Vercel Blob Storage
+          example: "https://ym58rk9cpdeglu7z.public.blob.vercel-storage.com/patients/7dfd5f6f-3ef8-4325-bd85-2bb53ffb1463/xray-1762836125293-gjiLyMkCuh6lFa2lI6vkHR2EfRTqEL.encrypted"
+        downloadUrl:
+          type: string
+          format: uri
+          description: Download URL with download parameter
+          example: "https://ym58rk9cpdeglu7z.public.blob.vercel-storage.com/patients/7dfd5f6f-3ef8-4325-bd85-2bb53ffb1463/xray-1762836125293-gjiLyMkCuh6lFa2lI6vkHR2EfRTqEL.encrypted?download=1"
+        encrypted:
+          type: boolean
+          description: Whether the file is encrypted
+          example: true
+        size:
+          type: integer
+          description: File size in bytes
+          example: 174469
+        checksum:
+          type: string
+          description: SHA-256 checksum of the file
+          example: "163d481189f2883161ce31acffbe371c56c0853eac22270ae994d3fbc4ff5074"
 
   responses:
     NotFound:
