@@ -102,13 +102,37 @@ class IPFSService {
   async uploadToPinata(fileBuffer, fileName) {
     try {
       const formData = new FormData();
-      formData.append('file', fileBuffer, fileName);
+      
+      // Determine content type based on file extension
+      const getContentType = (fileName) => {
+        const ext = path.extname(fileName).toLowerCase();
+        const contentTypes = {
+          '.jpg': 'image/jpeg',
+          '.jpeg': 'image/jpeg',
+          '.png': 'image/png',
+          '.gif': 'image/gif',
+          '.webp': 'image/webp',
+          '.bmp': 'image/bmp',
+          '.tiff': 'image/tiff',
+          '.tif': 'image/tiff'
+        };
+        return contentTypes[ext] || 'application/octet-stream';
+      };
+
+      const contentType = getContentType(fileName);
+      
+      // Append file with proper content type
+      formData.append('file', fileBuffer, {
+        filename: fileName,
+        contentType: contentType
+      });
 
       const metadata = JSON.stringify({
         name: fileName,
         keyvalues: {
           hospital_id: process.env.HOSPITAL_ID,
-          uploaded_at: new Date().toISOString()
+          uploaded_at: new Date().toISOString(),
+          content_type: contentType
         }
       });
       formData.append('pinataMetadata', metadata);

@@ -1,12 +1,18 @@
 const tf = require('@tensorflow/tfjs-node');
 const path = require('path');
 const fs = require('fs').promises;
-// const sharp = require('sharp'); // Commented out for demo
+const axios = require('axios');
 const logger = require('../utils/logger');
+const encryptionService = require('./encryption');
 
 class FeatureExtractor {
   constructor() {
-    this.models = {};
+    this.models = {
+      xray: null,
+      histopathology: null,
+      ultrasound: null,
+      fusion: null
+    };
     this.isInitialized = false;
   }
 
@@ -20,7 +26,7 @@ class FeatureExtractor {
       await this.loadModels();
       
       this.isInitialized = true;
-      logger.info('Feature extraction models initialized successfully');
+      logger.info('✓ Feature extraction models initialized successfully');
       
     } catch (error) {
       logger.error('Failed to initialize feature extraction models:', error);
@@ -29,31 +35,42 @@ class FeatureExtractor {
   }
 
   async loadModels() {
-    const modelPaths = {
-      xray: process.env.XRAY_MODEL_PATH || '../../../extractor_xray.h5',
-      histopathology: process.env.HISTO_MODEL_PATH || '../../../extractor_histo.h5',
-      ultrasound: process.env.ULTRA_MODEL_PATH || '../../../extractor_ultra.h5'
-    };
+    try {
+      // CRITICAL FIX: Use correct path to Model directory
+      const modelBasePath = process.env.MODEL_PATH || path.join(__dirname, '../../Model');
+      
+      logger.info(`Loading models from: ${modelBasePath}`);
+      
+      // Load all required models including fusion model
+      const modelPaths = {
+        xray: path.join(modelBasePath, 'extractor_xray.h5'),
+        histopathology: path.join(modelBasePath, 'extractor_histo.h5'),
+        ultrasound: path.join(modelBasePath, 'extractor_ultra.h5'),
+        fusion: path.join(modelBasePath, 'fusion_model.h5')
+      };
 
-    // Load models for each modality
-    for (const [modality, modelPath] of Object.entries(modelPaths)) {
-      try {
-        const fullPath = path.resolve(__dirname, modelPath);
-        
-        // Check if model file exists
-        await fs.access(fullPath);
-        
-        // Load TensorFlow model
-        this.models[modality] = await tf.loadLayersModel(`file://${fullPath}`);
-        logger.info(`✓ Loaded ${modality} feature extraction model`);
-        
-      } catch (error) {
-        logger.warn(`Failed to load ${modality} model from ${modelPath}:`, error.message);
-        
-        // Create a mock model for demonstration
-        this.models[modality] = this.createMockModel(modality);
-        logger.info(`✓ Created mock ${modality} model for demonstration`);
+      // Load models for each modality
+      for (const [modality, modelPath] of Object.entries(modelPaths)) {
+        try {
+          // Check if model file exists
+          await fs.access(modelPath);
+          
+          // Load TensorFlow model
+          this.models[modality] = await tf.loadLayersModel(`file://${modelPath}`);
+          logger.info(`✓ Loaded ${modality} model from ${modelPath}`);
+          
+        } catch (error) {
+          logger.warn(`Failed to load ${modality} model from ${modelPath}:`, error.message);
+          
+          // Create a mock model for demonstration
+          this.models[modality] = this.createMockModel(modality);
+          logger.warn(`⚠️ Using mock ${modality} model - features will be RANDOM!`);
+        }
       }
+      
+    } catch (error) {
+      logger.error('Model loading failed:', error);
+      throw error;
     }
   }
 
@@ -179,6 +196,111 @@ class FeatureExtractor {
       extraction_timestamp: new Date().toISOString(),
       processed_images: processedImages
     };
+  }
+
+  /**
+   * CRITICAL FIX: Extract features from Vercel Blob URL (encrypted)
+   * This is the main method for federated learning
+   */
+  async extractFromVercelBlob(blobUrl, modality) {
+    await this.initialize();
+    
+    try {
+      logger.info(`Extracting features from Vercel Blob: ${blobUrl}`);
+      
+      // 1. Download encrypted file from Vercel Blob
+      const response = await axios.get(blobUrl, { 
+        responseType: 'arraybuffer',
+        timeout: 30000 
+      });
+      const encryptedBuffer = Buffer.from(response.data);
+      logger.info(`Downloaded ${encryptedBuffer.length} bytes (encrypted)`);
+      
+      // 2. Decrypt the buffer
+      const decryptedBuffer = await encryptionService.decryptBuffer(encryptedBuffer);
+      logger.info(`Decrypted to ${decryptedBuffer.length} bytes`);
+      
+      // 3. Extract features from decrypted image
+      const processedImage = await this.preprocessImage(decryptedBuffer, modality);
+      const featuresTensor = this.models[modality].predict(processedImage);
+      const featuresArray = Array.from(await featuresTensor.data());
+      
+      // 4. Cleanup tensors immediately
+      processedImage.dispose();
+      featuresTensor.dispose();
+      
+      logger.info(`✓ Extracted ${featuresArray.length} features from ${modality}`);
+      
+      return featuresArray;
+      
+    } catch (error) {
+      logger.error(`Failed to extract features from Vercel Blob (${modality}):`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Extract complete patient features from Vercel Blob URLs
+   * Returns 3,840-dimensional feature vector ready for training
+   */
+  async extractPatientFeaturesFromBlob(patient) {
+    await this.initialize();
+    
+    const startTime = Date.now();
+    
+    try {
+      logger.info(`Extracting patient features for: ${patient.id}`);
+      
+      // Extract features from each modality's Vercel Blob URL
+      const xrayFeatures = await this.extractFromVercelBlob(
+        patient.files.xray[0].blob_storage.url,
+        'xray'
+      );
+      
+      const histoFeatures = await this.extractFromVercelBlob(
+        patient.files.histopathology[0].blob_storage.url,
+        'histopathology'
+      );
+      
+      const ultraFeatures = await this.extractFromVercelBlob(
+        patient.files.ultrasound[0].blob_storage.url,
+        'ultrasound'
+      );
+      
+      // Combine all features into single vector
+      const combinedFeatures = [
+        ...xrayFeatures,
+        ...histoFeatures,
+        ...ultraFeatures
+      ];
+      
+      const processingTime = Date.now() - startTime;
+      
+      logger.info(`✓ Extracted total ${combinedFeatures.length} features in ${processingTime}ms`);
+      
+      return {
+        patient_id: patient.id,
+        features: {
+          xray: xrayFeatures,
+          histopathology: histoFeatures,
+          ultrasound: ultraFeatures,
+          combined: combinedFeatures
+        },
+        dimensions: {
+          xray: xrayFeatures.length,
+          histopathology: histoFeatures.length,
+          ultrasound: ultraFeatures.length,
+          total: combinedFeatures.length
+        },
+        label: patient.metadata.diagnosis === 'malignant' ? 1 : 0,
+        extraction_timestamp: new Date().toISOString(),
+        processing_time_ms: processingTime
+      };
+      
+    } catch (error) {
+      logger.error(`Failed to extract patient features:`, error);
+      throw error;
+    }
   }
 
   async extractSingleImageFeatures(imagePath, modality) {

@@ -40,3 +40,6 @@
 {"cause":{"address":"127.0.0.1","code":"ECONNREFUSED","errno":-111,"port":5001,"syscall":"connect"},"level":"\u001b[31merror\u001b[39m","message":"\u001b[31mFailed to connect to IPFS: fetch failed\u001b[39m","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:15845:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-11-12 03:33:05:335"}
 {"level":"\u001b[31merror\u001b[39m","message":"\u001b[31mFailed to connect to local IPFS:\u001b[39m","timestamp":"2025-11-12 03:43:38:4338"}
 {"level":"\u001b[31merror\u001b[39m","message":"\u001b[31mFailed to connect to local IPFS:\u001b[39m","timestamp":"2025-11-12 03:49:14:4914"}
+{"level":"\u001b[31merror\u001b[39m","message":"\u001b[31mError serving decrypted image: patientService.getInstance is not a function\u001b[39m","timestamp":"2025-11-12 04:00:36:036"}
+{"level":"\u001b[31merror\u001b[39m","message":"\u001b[31mError serving decrypted image: Cannot read properties of null (reading 'cat')\u001b[39m","timestamp":"2025-11-12 04:04:23:423"}
+{"level":"\u001b[31merror\u001b[39m","message":"\u001b[31mError serving decrypted image: Cannot read properties of null (reading 'cat')\u001b[39m","timestamp":"2025-11-12 04:04:27:427"}

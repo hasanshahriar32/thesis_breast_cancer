@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const path = require('path');
 const logger = require('../utils/logger');
 const ipfsService = require('../services/ipfs');
 const encryptionService = require('../services/encryption');
@@ -59,25 +60,31 @@ router.post('/upload-patient/:patientId', async (req, res) => {
     };
     
     // Upload X-Ray
+    const xrayFile = patient.files.xray[0];
+    const xrayExt = path.extname(xrayFile.original_name || '.jpg');
     ipfsCids.xray = await uploadToIPFS(
-      patient.files.xray[0].blob_storage.url,
-      `xray-${patientId}.enc`
+      xrayFile.blob_storage.url,
+      `xray-${patientId}${xrayExt}`
     );
     ipfsGatewayUrls.xray = `${process.env.IPFS_GATEWAY}${ipfsCids.xray}`;
     logger.info(`✓ X-Ray uploaded to IPFS: ${ipfsCids.xray}`);
     
     // Upload Histopathology
+    const histoFile = patient.files.histopathology[0];
+    const histoExt = path.extname(histoFile.original_name || '.jpg');
     ipfsCids.histopathology = await uploadToIPFS(
-      patient.files.histopathology[0].blob_storage.url,
-      `histo-${patientId}.enc`
+      histoFile.blob_storage.url,
+      `histo-${patientId}${histoExt}`
     );
     ipfsGatewayUrls.histopathology = `${process.env.IPFS_GATEWAY}${ipfsCids.histopathology}`;
     logger.info(`✓ Histopathology uploaded to IPFS: ${ipfsCids.histopathology}`);
     
     // Upload Ultrasound
+    const ultraFile = patient.files.ultrasound[0];
+    const ultraExt = path.extname(ultraFile.original_name || '.jpg');
     ipfsCids.ultrasound = await uploadToIPFS(
-      patient.files.ultrasound[0].blob_storage.url,
-      `ultra-${patientId}.enc`
+      ultraFile.blob_storage.url,
+      `ultra-${patientId}${ultraExt}`
     );
     ipfsGatewayUrls.ultrasound = `${process.env.IPFS_GATEWAY}${ipfsCids.ultrasound}`;
     logger.info(`✓ Ultrasound uploaded to IPFS: ${ipfsCids.ultrasound}`);
@@ -100,12 +107,21 @@ router.post('/upload-patient/:patientId', async (req, res) => {
 
     logger.info(`✅ Successfully uploaded patient ${patientId} to IPFS`);
 
+    // Create URLs for viewing decrypted images
+    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+    const decryptedViewUrls = {
+      xray: `${baseUrl}/api/ipfs/view/${patientId}/xray`,
+      histopathology: `${baseUrl}/api/ipfs/view/${patientId}/histopathology`,
+      ultrasound: `${baseUrl}/api/ipfs/view/${patientId}/ultrasound`
+    };
+
     res.json({
       success: true,
       message: 'Patient images uploaded to IPFS successfully',
       patientId,
       ipfsCids,
-      ipfsGatewayUrls
+      ipfsGatewayUrls, // Raw encrypted files (for download)
+      decryptedViewUrls // Decrypted images for viewing
     });
 
   } catch (error) {
@@ -457,6 +473,153 @@ router.get('/metadata/:hash', async (req, res) => {
     logger.error('Error getting content metadata:', error);
     res.status(500).json({
       error: 'Failed to get content metadata',
+      message: error.message
+    });
+  }
+});
+
+// Decrypt and serve image from IPFS
+router.get('/view/:patientId/:modality', async (req, res) => {
+  try {
+    const { patientId, modality } = req.params;
+    const { hospital_id } = req.query;
+
+    logger.info(`Serving decrypted ${modality} image for patient ${patientId}`);
+
+    // 1. Ensure database connection
+    await patientService.connect();
+
+    // Build query - only filter by hospital_id if provided
+    const query = { id: patientId };
+    if (hospital_id) {
+      query['metadata.hospital_id'] = hospital_id;
+    }
+
+    logger.info(`Querying patient with: ${JSON.stringify(query)}`);
+    const patient = await patientService.collection.findOne(query);
+
+    if (!patient) {
+      logger.warn(`Patient ${patientId} not found in database`);
+      return res.status(404).json({ error: 'Patient not found' });
+    }
+
+    logger.info(`Found patient: ${patient.id}`);
+
+    // 2. Check if the modality exists and has IPFS CID
+    if (!patient.files) {
+      logger.error(`Patient ${patientId} has no files object`);
+      return res.status(404).json({ 
+        error: 'Patient has no uploaded files',
+        patientId: patient.id 
+      });
+    }
+
+    if (!patient.files[modality]) {
+      logger.error(`Patient ${patientId} has no ${modality} files`);
+      return res.status(404).json({ 
+        error: `${modality} not found for this patient`,
+        patientId: patient.id,
+        availableModalities: Object.keys(patient.files)
+      });
+    }
+
+    if (!patient.files[modality][0]) {
+      logger.error(`Patient ${patientId} ${modality} array is empty`);
+      return res.status(404).json({ 
+        error: `${modality} file array is empty`,
+        patientId: patient.id 
+      });
+    }
+
+    if (!patient.files[modality][0].ipfs_cid) {
+      logger.error(`Patient ${patientId} ${modality} has no IPFS CID`);
+      return res.status(404).json({ 
+        error: `${modality} not uploaded to IPFS yet`,
+        patientId: patient.id,
+        hasVercelBlob: !!patient.files[modality][0].blob_storage
+      });
+    }
+
+    const ipfsCid = patient.files[modality][0].ipfs_cid;
+    const originalName = patient.files[modality][0].original_name || `${modality}.jpg`;
+
+    logger.info(`Downloading ${modality} from IPFS CID: ${ipfsCid}`);
+
+    // 3. Ensure IPFS service is connected
+    await ipfsService.connect();
+
+    // 4. Download encrypted file from IPFS
+    let encryptedBuffer;
+    
+    // Always try Pinata gateway first since that's what we're using
+    try {
+      const gatewayUrl = `${process.env.IPFS_GATEWAY || 'https://gateway.pinata.cloud/ipfs/'}${ipfsCid}`;
+      logger.info(`Downloading from gateway: ${gatewayUrl}`);
+      
+      const response = await axios.get(gatewayUrl, { 
+        responseType: 'arraybuffer',
+        timeout: 30000 // 30 second timeout
+      });
+      
+      encryptedBuffer = Buffer.from(response.data);
+      logger.info(`Downloaded ${encryptedBuffer.length} bytes from IPFS`);
+      
+    } catch (gatewayError) {
+      logger.error(`Gateway download failed: ${gatewayError.message}`);
+      
+      // Fallback to local IPFS node if gateway fails
+      if (ipfsService.client) {
+        logger.info('Trying local IPFS node...');
+        const chunks = [];
+        for await (const chunk of ipfsService.client.cat(ipfsCid)) {
+          chunks.push(chunk);
+        }
+        encryptedBuffer = Buffer.concat(chunks);
+        logger.info(`Downloaded ${encryptedBuffer.length} bytes from local IPFS`);
+      } else {
+        throw new Error(`Cannot download from IPFS: Gateway failed and no local IPFS client available`);
+      }
+    }
+
+    // 5. Decrypt the file
+    logger.info(`Decrypting ${encryptedBuffer.length} bytes...`);
+    const decryptedBuffer = await encryptionService.decryptBuffer(encryptedBuffer);
+    logger.info(`Decrypted to ${decryptedBuffer.length} bytes`);
+
+    // 6. Determine content type from original filename
+    const getContentType = (fileName) => {
+      const ext = path.extname(fileName).toLowerCase();
+      const contentTypes = {
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+        '.webp': 'image/webp',
+        '.bmp': 'image/bmp',
+        '.tiff': 'image/tiff',
+        '.tif': 'image/tiff'
+      };
+      return contentTypes[ext] || 'image/jpeg';
+    };
+
+    const contentType = getContentType(originalName);
+
+    // 7. Set proper headers and serve the image
+    res.set({
+      'Content-Type': contentType,
+      'Content-Length': decryptedBuffer.length,
+      'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+      'Content-Disposition': `inline; filename="${originalName}"`
+    });
+
+    res.send(decryptedBuffer);
+
+    logger.info(`✓ Served decrypted ${modality} image for patient ${patientId}`);
+
+  } catch (error) {
+    logger.error(`Error serving decrypted image: ${error.message}`);
+    res.status(500).json({
+      error: 'Failed to serve image',
       message: error.message
     });
   }

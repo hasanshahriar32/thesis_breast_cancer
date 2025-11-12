@@ -157,6 +157,35 @@ class EncryptionService {
     }
   }
 
+  async decryptBuffer(encryptedBuffer) {
+    try {
+      logger.info(`Decrypting buffer of size: ${encryptedBuffer.length}`);
+      
+      // Extract IV, tag, and encrypted content from buffer
+      const iv = encryptedBuffer.slice(0, this.ivLength);
+      const tag = encryptedBuffer.slice(this.ivLength, this.ivLength + this.tagLength);
+      const encrypted = encryptedBuffer.slice(this.ivLength + this.tagLength);
+      
+      // Create decipher
+      const decipher = crypto.createDecipheriv(this.algorithm, this.secretKey, iv);
+      decipher.setAuthTag(tag);
+      
+      // Decrypt the data
+      const decrypted = Buffer.concat([
+        decipher.update(encrypted),
+        decipher.final()
+      ]);
+      
+      logger.info(`Buffer decrypted successfully`);
+      
+      return decrypted;
+      
+    } catch (error) {
+      logger.error(`Failed to decrypt buffer:`, error);
+      throw new Error(`Buffer decryption failed: ${error.message}`);
+    }
+  }
+
   encryptText(text) {
     try {
       const iv = crypto.randomBytes(this.ivLength);
