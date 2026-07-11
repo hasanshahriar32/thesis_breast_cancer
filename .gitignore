@@ -1,3 +1,21 @@
 .venv
 .venv/*
 hospital-backend/uploads/patients
+node_modules
+node_modules/*
+frontend/node_modules
+frontend/node_modules/*
+frontend/build
+frontend/build/*
+__pycache__
+__pycache__/*
+*.pyc
+.env
+
+# Large model files (>100MB, use Git LFS or external storage)
+*.pth
+*.h5
+*.pkl
+*.ckpt
+model/model_code*.ipynb
+model/best_histopathology_model.pth

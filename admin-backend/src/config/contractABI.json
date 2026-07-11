@@ -1,0 +1,1612 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_requiredSubmissions",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_minSamples",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "EnforcedPause",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ExpectedPause",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnableInvalidOwner",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "OwnableUnauthorizedAccount",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ReentrancyGuardReentrantCall",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "round",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "submissionCount",
+        "type": "uint256"
+      }
+    ],
+    "name": "AggregationRequired",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newMinSamples",
+        "type": "uint256"
+      }
+    ],
+    "name": "MinSamplesUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "version",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "modelCID",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "accuracy",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "aucScore",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "contributorCount",
+        "type": "uint256"
+      }
+    ],
+    "name": "NewGlobalModel",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newOracle",
+        "type": "address"
+      }
+    ],
+    "name": "OracleUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnershipTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "participant",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "region",
+        "type": "string"
+      }
+    ],
+    "name": "ParticipantRegistered",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "participant",
+        "type": "address"
+      }
+    ],
+    "name": "ParticipantRemoved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "participant",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "region",
+        "type": "string"
+      }
+    ],
+    "name": "ParticipantUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "Paused",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newRequired",
+        "type": "uint256"
+      }
+    ],
+    "name": "RequiredSubmissionsUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "Unpaused",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "contributor",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "round",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "sampleCount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "accuracy",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "auc",
+        "type": "uint256"
+      }
+    ],
+    "name": "UpdateSubmitted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "version",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "totalParameters",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "architecture",
+        "type": "string"
+      }
+    ],
+    "name": "WeightMetadataStored",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "currentRound",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_round",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_index",
+        "type": "uint256"
+      }
+    ],
+    "name": "getContributorAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getCurrentRoundSubmissions",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_version",
+        "type": "uint256"
+      }
+    ],
+    "name": "getGlobalModelByVersion",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "version",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "modelWeightsCID",
+            "type": "string"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "modelHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalSamples",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "accuracy",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "aucScore",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "sensitivity",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "specificity",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "contributorCount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "parentVersion",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct FederatedModelRegistry.GlobalModel",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_hospital",
+        "type": "address"
+      }
+    ],
+    "name": "getHospitalContributions",
+    "outputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_hospital",
+        "type": "address"
+      }
+    ],
+    "name": "getHospitalInfo",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "region",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "registrationTime",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalContributions",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalSamplesContributed",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "isActive",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct FederatedModelRegistry.HospitalInfo",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getLatestGlobalModel",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "version",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "modelWeightsCID",
+            "type": "string"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "modelHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalSamples",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "accuracy",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "aucScore",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "sensitivity",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "specificity",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "contributorCount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "parentVersion",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct FederatedModelRegistry.GlobalModel",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getModelCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_version",
+        "type": "uint256"
+      }
+    ],
+    "name": "getModelLineage",
+    "outputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getNetworkStatistics",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "totalHospitals",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "activeHospitals",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "totalContributions",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "totalSamples",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "currentRoundNumber",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "modelsPublished",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getParticipants",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_round",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_index",
+        "type": "uint256"
+      }
+    ],
+    "name": "getUpdateByIndex",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "contributor",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "modelWeightsCID",
+            "type": "string"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "modelHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "dataSampleCount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "localAccuracy",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "localAUC",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "localSensitivity",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "localSpecificity",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "round",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "submissionTime",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "trainingDuration",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct FederatedModelRegistry.ModelUpdate",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_round",
+        "type": "uint256"
+      }
+    ],
+    "name": "getUpdatesForRound",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "contributor",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "modelWeightsCID",
+            "type": "string"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "modelHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "dataSampleCount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "localAccuracy",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "localAUC",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "localSensitivity",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "localSpecificity",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "round",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "submissionTime",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "trainingDuration",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct FederatedModelRegistry.ModelUpdate[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_version",
+        "type": "uint256"
+      }
+    ],
+    "name": "getWeightMetadata",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "totalParameters",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "modelSize",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "inputSize",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "framework",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "version",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "architecture",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct FederatedModelRegistry.WeightMetadata",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "globalModels",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "version",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "modelWeightsCID",
+        "type": "string"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "modelHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "totalSamples",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "accuracy",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "aucScore",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "sensitivity",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "specificity",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "contributorCount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "parentVersion",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "hasSubmitted",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_participant",
+        "type": "address"
+      }
+    ],
+    "name": "hasSubmittedCurrentRound",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "hospitalContributions",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "hospitalInfo",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "region",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "registrationTime",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "totalContributions",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "totalSamplesContributed",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "isActive",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "hospitalTotalSamples",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_modelCID",
+        "type": "string"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "_modelHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "initializeGenesisModel",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "isParticipant",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "minSamplesPerUpdate",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "modelMetadata",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "totalParameters",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "modelSize",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "inputSize",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "framework",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "version",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "architecture",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "oracle",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "participantList",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "pause",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "paused",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_modelCID",
+        "type": "string"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "_modelHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_accuracy",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_aucScore",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_sensitivity",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_specificity",
+        "type": "uint256"
+      }
+    ],
+    "name": "publishNewGlobalModel",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_participant",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "_name",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_region",
+        "type": "string"
+      }
+    ],
+    "name": "registerParticipant",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_participant",
+        "type": "address"
+      }
+    ],
+    "name": "removeParticipant",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "requiredSubmissions",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "roundUpdates",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "contributor",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "modelWeightsCID",
+        "type": "string"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "modelHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "dataSampleCount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "localAccuracy",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "localAUC",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "localSensitivity",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "localSpecificity",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "round",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "submissionTime",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "trainingDuration",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_hospital",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "_isActive",
+        "type": "bool"
+      }
+    ],
+    "name": "setHospitalStatus",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_minSamples",
+        "type": "uint256"
+      }
+    ],
+    "name": "setMinSamplesPerUpdate",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_oracle",
+        "type": "address"
+      }
+    ],
+    "name": "setOracleAddress",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_count",
+        "type": "uint256"
+      }
+    ],
+    "name": "setRequiredSubmissions",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_version",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_totalParams",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_modelSize",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_inputSize",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "_framework",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_frameworkVersion",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_architecture",
+        "type": "string"
+      }
+    ],
+    "name": "storeWeightMetadata",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_modelCID",
+        "type": "string"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "_modelHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_sampleCount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_localAccuracy",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_localAUC",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_localSensitivity",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_localSpecificity",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_trainingDuration",
+        "type": "uint256"
+      }
+    ],
+    "name": "submitUpdate",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "unpause",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_modelCID",
+        "type": "string"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "_modelHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "updateGenesisModelCID",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_participant",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "_name",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_region",
+        "type": "string"
+      }
+    ],
+    "name": "updateHospitalInfo",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]
