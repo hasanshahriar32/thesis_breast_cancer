@@ -1,5 +1,12 @@
 # 🚀 Quick Setup Guide
 
+## Histopathology Classification Model
+
+- **Architecture**: EfficientNet-B0 + Coordinate Attention
+- **Task**: Binary Classification (Benign vs Malignant)
+- **Input**: 160×160 RGB histopathology images
+- **Framework**: PyTorch 2.0+
+
 ## Step-by-Step Instructions to Deploy Your Smart Contract
 
 ### 1. Prerequisites
@@ -134,7 +141,7 @@ await contract.setOracleAddress("YOUR_WALLET_ADDRESS");
 Before participants can submit updates, you need to initialize the first model:
 
 ```javascript
-// Upload your initial model to IPFS and get the CID
+// Upload your pre-trained EfficientNet-B0 weights to IPFS and get the CID
 const genesisCID = "QmYourIPFSCID...";
 const genesisHash = "0x" + require('crypto').randomBytes(32).toString('hex');
 

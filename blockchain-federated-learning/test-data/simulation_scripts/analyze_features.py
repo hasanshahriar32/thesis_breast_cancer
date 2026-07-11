@@ -2,8 +2,8 @@
 """
 Feature Analysis Script
 
-This script analyzes the 3,840-dimensional feature space extracted from
-breast imaging data across the federated learning network.
+This script analyzes the 1,280-dimensional feature space extracted from
+histopathology imaging data across the federated learning network.
 
 Usage:
     python analyze_features.py
@@ -22,7 +22,6 @@ class FeatureAnalyzer:
     def __init__(self, test_data_dir: str = "../"):
         self.test_data_dir = Path(test_data_dir)
         self.feature_data = []
-        self.modalities = ['xray_features', 'histopathology_features', 'ultrasound_features']
         
     def load_feature_data(self):
         """Load feature data from all hospitals."""
@@ -40,129 +39,101 @@ class FeatureAnalyzer:
                     self.feature_data.append({
                         'hospital_id': feature_data['hospital_id'],
                         'features': feature_data['feature_extraction_summary'],
-                        'combined': feature_data['combined_features'],
+                        'feature_space': feature_data['feature_space'],
                         'abnormality': feature_data['abnormality_detection']
                     })
-                    print(f"✅ Loaded features for {feature_data['hospital_id']}")
+                    print(f"\u2705 Loaded features for {feature_data['hospital_id']}")
             else:
-                print(f"❌ Features file not found: {features_path}")
+                print(f"\u274c Features file not found: {features_path}")
     
     def analyze_feature_dimensions(self):
         """Analyze the dimensionality of the feature space."""
         print("\n" + "="*60)
-        print("🔬 FEATURE SPACE ANALYSIS")
+        print("\U0001f52c FEATURE SPACE ANALYSIS")
         print("="*60)
         
         if not self.feature_data:
-            print("❌ No feature data loaded")
+            print("\u274c No feature data loaded")
             return
         
-        # Analyze each modality
-        print(f"\n📊 Feature Dimensions by Modality:")
+        histo = self.feature_data[0]['features']['histopathology_features']
+        dimensions = histo['total_features']
+        categories = len(histo['feature_categories'])
         
-        total_dimensions = 0
-        for modality in self.modalities:
-            modality_name = modality.replace('_features', '').replace('_', ' ').title()
-            dimensions = self.feature_data[0]['features'][modality]['total_features']
-            categories = len(self.feature_data[0]['features'][modality]['feature_categories'])
-            
-            print(f"   • {modality_name}:")
-            print(f"     - Dimensions: {dimensions:,}")
-            print(f"     - Categories: {categories}")
-            print(f"     - Features per Category: ~{dimensions//categories}")
-            
-            total_dimensions += dimensions
-        
-        print(f"\n🎯 Total Feature Space:")
-        print(f"   • Combined Dimensions: {total_dimensions:,}")
-        print(f"   • Total Categories: {sum(len(hospital['features'][mod]['feature_categories']) for hospital in self.feature_data for mod in self.modalities) // len(self.feature_data)}")
+        print(f"\n\U0001f4ca Feature Dimensions:")
+        print(f"   \u2022 Modality: Histopathology (H&E Staining)")
+        print(f"   \u2022 Extraction Model: {histo.get('extraction_model', 'EfficientNet-B0 + Coordinate Attention')}")
+        print(f"   \u2022 Framework: {histo.get('framework', 'PyTorch')}")
+        print(f"   \u2022 Dimensions: {dimensions:,}")
+        print(f"   \u2022 Feature Categories: {categories}")
+        print(f"   \u2022 Features per Category: ~{dimensions//categories}")
     
     def analyze_feature_categories(self):
         """Analyze feature categories across hospitals."""
-        print(f"\n📋 FEATURE CATEGORY ANALYSIS")
+        print(f"\n\U0001f4cb FEATURE CATEGORY ANALYSIS")
         print("-" * 60)
         
-        for modality in self.modalities:
-            modality_name = modality.replace('_features', '').replace('_', ' ').title()
-            print(f"\n🔍 {modality_name} Categories:")
-            
-            # Get categories from first hospital (they should be consistent)
-            categories = self.feature_data[0]['features'][modality]['feature_categories']
-            
-            for i, category in enumerate(categories, 1):
-                print(f"   {i:2d}. {category['category']}")
-                print(f"       • Features: {category['feature_indices'][0]}-{category['feature_indices'][1]}")
-                print(f"       • Key Features: {', '.join(category['key_features'][:2])}...")
-                print(f"       • Abnormality Threshold: {category['statistics']['abnormality_threshold']}")
+        print(f"\n\U0001f50d Histopathology Feature Categories:")
+        
+        categories = self.feature_data[0]['features']['histopathology_features']['feature_categories']
+        
+        for i, category in enumerate(categories, 1):
+            print(f"   {i:2d}. {category['category']}")
+            print(f"       \u2022 Features: {category['feature_indices'][0]}-{category['feature_indices'][1]}")
+            print(f"       \u2022 Key Features: {', '.join(category['key_features'][:2])}...")
+            print(f"       \u2022 Abnormality Threshold: {category['statistics']['abnormality_threshold']}")
     
     def analyze_discriminative_features(self):
         """Analyze the most discriminative features across hospitals."""
-        print(f"\n🎯 TOP DISCRIMINATIVE FEATURES")
+        print(f"\n\U0001f3af TOP DISCRIMINATIVE FEATURES")
         print("-" * 60)
         
-        for modality in self.modalities:
-            modality_name = modality.replace('_features', '').replace('_', ' ').title()
-            print(f"\n⭐ {modality_name}:")
-            
-            # Collect all discriminative features across hospitals
-            all_features = []
-            for hospital in self.feature_data:
-                features = hospital['features'][modality]['top_discriminative_features']
-                for feature in features:
-                    all_features.append((
-                        feature['name'],
-                        feature['importance_score'],
-                        hospital['hospital_id']
-                    ))
-            
-            # Sort by importance
-            all_features.sort(key=lambda x: x[1], reverse=True)
-            
-            # Show top 5
-            for i, (name, score, hospital) in enumerate(all_features[:5], 1):
-                print(f"   {i}. {name}")
-                print(f"      • Importance: {score:.3f}")
-                print(f"      • Hospital: {hospital}")
+        all_features = []
+        for hospital in self.feature_data:
+            features = hospital['features']['histopathology_features']['top_discriminative_features']
+            for feature in features:
+                all_features.append((
+                    feature['name'],
+                    feature['importance_score'],
+                    hospital['hospital_id']
+                ))
+        
+        all_features.sort(key=lambda x: x[1], reverse=True)
+        
+        print(f"\n\u2b50 Top Histopathology Features (across all hospitals):")
+        for i, (name, score, hospital) in enumerate(all_features[:10], 1):
+            print(f"   {i}. {name}")
+            print(f"      \u2022 Importance: {score:.3f}")
+            print(f"      \u2022 Hospital: {hospital}")
     
     def analyze_feature_statistics(self):
         """Analyze feature statistics across hospitals."""
-        print(f"\n📈 FEATURE STATISTICS COMPARISON")
+        print(f"\n\U0001f4c8 FEATURE STATISTICS COMPARISON")
         print("-" * 60)
         
-        for modality in self.modalities:
-            modality_name = modality.replace('_features', '').replace('_', ' ').title()
-            print(f"\n📊 {modality_name} Statistics:")
-            
-            # Collect statistics from all hospitals
-            stats_data = {
-                'mean': [],
-                'std': [],
-                'sparsity': []
-            }
-            
-            for hospital in self.feature_data:
-                feature_stats = hospital['features'][modality]['feature_categories'][0]['statistics']
-                
-                # Get overall statistics (from first category as example)
-                stats_data['mean'].append(feature_stats['mean_activation'])
-                stats_data['std'].append(feature_stats['std_activation'])
-                
-                # Get sparsity from combined features if available
-                if 'sparsity' in hospital['features'][modality]:
-                    stats_data['sparsity'].append(hospital['features'][modality]['sparsity'])
-            
-            # Calculate cross-hospital statistics
-            print(f"   • Mean Activation:")
-            print(f"     - Average: {statistics.mean(stats_data['mean']):.3f}")
-            print(f"     - Range: {min(stats_data['mean']):.3f} - {max(stats_data['mean']):.3f}")
-            
-            print(f"   • Standard Deviation:")
-            print(f"     - Average: {statistics.mean(stats_data['std']):.3f}")
-            print(f"     - Range: {min(stats_data['std']):.3f} - {max(stats_data['std']):.3f}")
+        print(f"\n\U0001f4ca Histopathology Feature Statistics:")
+        
+        stats_data = {
+            'mean': [],
+            'std': []
+        }
+        
+        for hospital in self.feature_data:
+            feature_stats = hospital['features']['histopathology_features']['feature_categories'][0]['statistics']
+            stats_data['mean'].append(feature_stats['mean_activation'])
+            stats_data['std'].append(feature_stats['std_activation'])
+        
+        print(f"   \u2022 Mean Activation:")
+        print(f"     - Average: {statistics.mean(stats_data['mean']):.3f}")
+        print(f"     - Range: {min(stats_data['mean']):.3f} - {max(stats_data['mean']):.3f}")
+        
+        print(f"   \u2022 Standard Deviation:")
+        print(f"     - Average: {statistics.mean(stats_data['std']):.3f}")
+        print(f"     - Range: {min(stats_data['std']):.3f} - {max(stats_data['std']):.3f}")
     
     def analyze_abnormality_detection(self):
         """Analyze abnormality detection capabilities."""
-        print(f"\n🚨 ABNORMALITY DETECTION ANALYSIS")
+        print(f"\n\U0001f6a8 ABNORMALITY DETECTION ANALYSIS")
         print("-" * 60)
         
         total_abnormal = 0
@@ -178,123 +149,87 @@ class FeatureAnalyzer:
             total_abnormal += abnormal
             total_normal += normal
             
-            print(f"\n🏥 {hospital_id}:")
-            print(f"   • Abnormal Samples: {abnormal:,}")
-            print(f"   • Normal Samples: {normal:,}")
-            print(f"   • Abnormality Rate: {abnormal/(abnormal+normal)*100:.1f}%")
+            print(f"\n\U0001f3e5 {hospital_id}:")
+            print(f"   \u2022 Abnormal Samples: {abnormal:,}")
+            print(f"   \u2022 Normal Samples: {normal:,}")
+            print(f"   \u2022 Abnormality Rate: {abnormal/(abnormal+normal)*100:.1f}%")
             
-            # Show confidence distribution
             dist = abnormality['abnormality_distribution']
-            print(f"   • High Confidence Malignant: {dist['high_confidence_malignant']}")
-            print(f"   • High Confidence Benign: {dist['high_confidence_benign']}")
+            print(f"   \u2022 High Confidence Malignant: {dist['high_confidence_malignant']}")
+            print(f"   \u2022 High Confidence Benign: {dist['high_confidence_benign']}")
         
-        # Network summary
         total_samples = total_abnormal + total_normal
         network_abnormality_rate = (total_abnormal / total_samples) * 100
         
-        print(f"\n🌐 Network Summary:")
-        print(f"   • Total Samples: {total_samples:,}")
-        print(f"   • Total Abnormal: {total_abnormal:,} ({network_abnormality_rate:.1f}%)")
-        print(f"   • Total Normal: {total_normal:,} ({100-network_abnormality_rate:.1f}%)")
-    
-    def analyze_multimodal_correlation(self):
-        """Analyze correlation between different imaging modalities."""
-        print(f"\n🔗 MULTIMODAL CORRELATION ANALYSIS")
-        print("-" * 60)
-        
-        for hospital in self.feature_data:
-            hospital_id = hospital['hospital_id']
-            combined = hospital['combined']
-            
-            print(f"\n🏥 {hospital_id}:")
-            print(f"   • X-Ray ↔ Histopathology: {combined['feature_correlation']['xray_histo']:.3f}")
-            print(f"   • X-Ray ↔ Ultrasound: {combined['feature_correlation']['xray_ultra']:.3f}")
-            print(f"   • Histopathology ↔ Ultrasound: {combined['feature_correlation']['histo_ultra']:.3f}")
-            print(f"   • Multimodal Synergy Score: {combined['multimodal_synergy_score']:.3f}")
-        
-        # Calculate network averages
-        correlations = {
-            'xray_histo': [],
-            'xray_ultra': [],
-            'histo_ultra': [],
-            'synergy': []
-        }
-        
-        for hospital in self.feature_data:
-            combined = hospital['combined']
-            correlations['xray_histo'].append(combined['feature_correlation']['xray_histo'])
-            correlations['xray_ultra'].append(combined['feature_correlation']['xray_ultra'])
-            correlations['histo_ultra'].append(combined['feature_correlation']['histo_ultra'])
-            correlations['synergy'].append(combined['multimodal_synergy_score'])
-        
-        print(f"\n🌐 Network Averages:")
-        print(f"   • X-Ray ↔ Histopathology: {statistics.mean(correlations['xray_histo']):.3f}")
-        print(f"   • X-Ray ↔ Ultrasound: {statistics.mean(correlations['xray_ultra']):.3f}")
-        print(f"   • Histopathology ↔ Ultrasound: {statistics.mean(correlations['histo_ultra']):.3f}")
-        print(f"   • Average Synergy Score: {statistics.mean(correlations['synergy']):.3f}")
+        print(f"\n\U0001f310 Network Summary:")
+        print(f"   \u2022 Total Samples: {total_samples:,}")
+        print(f"   \u2022 Total Abnormal: {total_abnormal:,} ({network_abnormality_rate:.1f}%)")
+        print(f"   \u2022 Total Normal: {total_normal:,} ({100-network_abnormality_rate:.1f}%)")
     
     def generate_feature_report(self):
         """Generate a comprehensive feature analysis report."""
-        print(f"\n📋 FEATURE ANALYSIS SUMMARY")
+        print(f"\n\U0001f4cb FEATURE ANALYSIS SUMMARY")
         print("=" * 60)
         
         if not self.feature_data:
-            print("❌ No feature data available for analysis")
+            print("\u274c No feature data available for analysis")
             return
         
-        # Summary statistics
         total_hospitals = len(self.feature_data)
-        total_dimensions = 3840  # Fixed architecture
+        total_dimensions = 1280
         
-        print(f"🔬 Feature Space Overview:")
-        print(f"   • Participating Hospitals: {total_hospitals}")
-        print(f"   • Feature Dimensions: {total_dimensions:,}")
-        print(f"   • Imaging Modalities: {len(self.modalities)}")
-        print(f"   • Features per Modality: {total_dimensions // len(self.modalities):,}")
+        print(f"\U0001f52c Feature Space Overview:")
+        print(f"   \u2022 Participating Hospitals: {total_hospitals}")
+        print(f"   \u2022 Feature Dimensions: {total_dimensions:,}")
+        print(f"   \u2022 Imaging Modality: Histopathology (single-modality)")
+        print(f"   \u2022 Extraction Model: EfficientNet-B0 + Coordinate Attention")
+        print(f"   \u2022 Framework: PyTorch")
+        print(f"   \u2022 Feature Categories: 12")
         
-        # Calculate network-wide feature importance
-        print(f"\n⭐ Network-Wide Top Features:")
+        print(f"\n\u2b50 Network-Wide Top Features:")
         
         all_important_features = []
-        for modality in self.modalities:
-            for hospital in self.feature_data:
-                features = hospital['features'][modality]['top_discriminative_features']
-                for feature in features[:2]:  # Top 2 per modality per hospital
-                    all_important_features.append((
-                        feature['name'],
-                        feature['importance_score'],
-                        modality.replace('_features', '')
-                    ))
+        for hospital in self.feature_data:
+            features = hospital['features']['histopathology_features']['top_discriminative_features']
+            for feature in features[:3]:
+                all_important_features.append((
+                    feature['name'],
+                    feature['importance_score']
+                ))
         
-        # Sort and show top features
         all_important_features.sort(key=lambda x: x[1], reverse=True)
-        for i, (name, score, modality) in enumerate(all_important_features[:10], 1):
-            print(f"   {i:2d}. {name} ({modality}) - {score:.3f}")
+        seen = set()
+        rank = 0
+        for name, score in all_important_features:
+            if name not in seen:
+                seen.add(name)
+                rank += 1
+                print(f"   {rank:2d}. {name} - {score:.3f}")
+                if rank >= 5:
+                    break
         
-        print(f"\n✅ Feature analysis complete!")
-        print(f"   The network has rich, diverse feature representations")
+        print(f"\n\u2705 Feature analysis complete!")
+        print(f"   The network has rich histopathology feature representations")
         print(f"   suitable for robust federated learning.")
 
 
 def main():
     """Main execution function."""
-    print("🔬 Feature Space Analyzer")
-    print("Analyzing 3,840-dimensional feature extraction...")
+    print("\U0001f52c Feature Space Analyzer")
+    print("Analyzing 1,280-dimensional histopathology feature extraction...")
     
     analyzer = FeatureAnalyzer()
     analyzer.load_feature_data()
     
     if not analyzer.feature_data:
-        print("❌ No feature data found. Please check the test-data directory structure.")
+        print("\u274c No feature data found. Please check the test-data directory structure.")
         return
     
-    # Run all analyses
     analyzer.analyze_feature_dimensions()
     analyzer.analyze_feature_categories()
     analyzer.analyze_discriminative_features()
     analyzer.analyze_feature_statistics()
     analyzer.analyze_abnormality_detection()
-    analyzer.analyze_multimodal_correlation()
     analyzer.generate_feature_report()
 
 

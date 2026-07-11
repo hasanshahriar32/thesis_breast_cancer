@@ -8,7 +8,7 @@ const patientService = require('../services/patient');
 const fs = require('fs').promises;
 const axios = require('axios');
 
-// Upload patient encrypted images to IPFS
+// Upload patient encrypted images to IPFS (histopathology only)
 router.post('/upload-patient/:patientId', async (req, res) => {
   try {
     const { patientId } = req.params;
@@ -19,7 +19,7 @@ router.post('/upload-patient/:patientId', async (req, res) => {
     const patientServiceInstance = require('../services/patient');
     
     const patient = await patientServiceInstance.collection.findOne({ 
-      id: patientId  // Use the generated UUID instead of metadata.patientId
+      id: patientId
     });
     
     if (!patient) {
@@ -29,99 +29,78 @@ router.post('/upload-patient/:patientId', async (req, res) => {
       });
     }
 
-    // 2. Check if files have Vercel Blob Storage URLs
-    if (!patient.files?.xray?.[0]?.blob_storage?.url || 
-        !patient.files?.histopathology?.[0]?.blob_storage?.url || 
-        !patient.files?.ultrasound?.[0]?.blob_storage?.url) {
+    // 2. Check if histopathology files exist (local filesystem or blob storage)
+    const histoFile = patient.files?.histopathology?.[0];
+    if (!histoFile) {
       return res.status(400).json({
         success: false,
-        error: 'Patient files must be uploaded to Vercel Blob Storage first'
+        error: 'Patient must have a histopathology image uploaded first'
       });
     }
 
-    // 3. Upload each encrypted file from Vercel Blob to IPFS/Pinata
+    const fileUrl = histoFile.blob_storage?.url || histoFile.local_path;
+    if (!fileUrl) {
+      return res.status(400).json({
+        success: false,
+        error: 'Histopathology file has no storage URL or local path'
+      });
+    }
+
+    // 3. Upload histopathology file to IPFS/Pinata
     await ipfsService.connect();
     const ipfsCids = {};
     const ipfsGatewayUrls = {};
     
-    // Helper function to download from Vercel Blob and upload to Pinata
-    const uploadToIPFS = async (blobUrl, filename) => {
-      logger.info(`Downloading from Vercel Blob: ${blobUrl}`);
-      const response = await axios.get(blobUrl, { responseType: 'arraybuffer' });
-      const fileData = Buffer.from(response.data);
-      
-      if (ipfsService.usePinata) {
-        const result = await ipfsService.uploadToPinata(fileData, filename);
-        return result.cid;
-      } else {
-        const result = await ipfsService.client.add(fileData, { pin: true });
-        return result.cid.toString();
-      }
-    };
-    
-    // Upload X-Ray
-    const xrayFile = patient.files.xray[0];
-    const xrayExt = path.extname(xrayFile.original_name || '.jpg');
-    ipfsCids.xray = await uploadToIPFS(
-      xrayFile.blob_storage.url,
-      `xray-${patientId}${xrayExt}`
-    );
-    ipfsGatewayUrls.xray = `${process.env.IPFS_GATEWAY}${ipfsCids.xray}`;
-    logger.info(`✓ X-Ray uploaded to IPFS: ${ipfsCids.xray}`);
-    
-    // Upload Histopathology
-    const histoFile = patient.files.histopathology[0];
-    const histoExt = path.extname(histoFile.original_name || '.jpg');
-    ipfsCids.histopathology = await uploadToIPFS(
-      histoFile.blob_storage.url,
-      `histo-${patientId}${histoExt}`
-    );
-    ipfsGatewayUrls.histopathology = `${process.env.IPFS_GATEWAY}${ipfsCids.histopathology}`;
-    logger.info(`✓ Histopathology uploaded to IPFS: ${ipfsCids.histopathology}`);
-    
-    // Upload Ultrasound
-    const ultraFile = patient.files.ultrasound[0];
-    const ultraExt = path.extname(ultraFile.original_name || '.jpg');
-    ipfsCids.ultrasound = await uploadToIPFS(
-      ultraFile.blob_storage.url,
-      `ultra-${patientId}${ultraExt}`
-    );
-    ipfsGatewayUrls.ultrasound = `${process.env.IPFS_GATEWAY}${ipfsCids.ultrasound}`;
-    logger.info(`✓ Ultrasound uploaded to IPFS: ${ipfsCids.ultrasound}`);
+    let fileData;
+    if (histoFile.local_path) {
+      // Read from local filesystem
+      fileData = await fs.readFile(histoFile.local_path);
+    } else {
+      // Download from blob storage
+      const response = await axios.get(fileUrl, { responseType: 'arraybuffer' });
+      fileData = Buffer.from(response.data);
+    }
 
-    // 4. Update patient record with IPFS CIDs
+    const histoExt = path.extname(histoFile.original_name || '.jpg');
+    
+    if (ipfsService.usePinata) {
+      const result = await ipfsService.uploadToPinata(fileData, `histo-${patientId}${histoExt}`);
+      ipfsCids.histopathology = result.cid;
+    } else {
+      const result = await ipfsService.client.add(fileData, { pin: true });
+      ipfsCids.histopathology = result.cid.toString();
+    }
+    
+    ipfsGatewayUrls.histopathology = `${process.env.IPFS_GATEWAY || process.env.PINATA_GATEWAY}${ipfsCids.histopathology}`;
+    logger.info(`✓ Histopathology uploaded to IPFS: ${ipfsCids.histopathology}`);
+
+    // 4. Update patient record with IPFS CID
     await patientServiceInstance.collection.updateOne(
-      { id: patientId },  // Use the UUID instead of metadata.patientId
+      { id: patientId },
       {
         $set: {
-          'files.xray.0.ipfs_cid': ipfsCids.xray,
           'files.histopathology.0.ipfs_cid': ipfsCids.histopathology,
-          'files.ultrasound.0.ipfs_cid': ipfsCids.ultrasound,
-          'files.xray.0.ipfs_upload_date': new Date().toISOString(),
           'files.histopathology.0.ipfs_upload_date': new Date().toISOString(),
-          'files.ultrasound.0.ipfs_upload_date': new Date().toISOString(),
           updated_at: new Date()
         }
       }
     );
 
-    logger.info(`✅ Successfully uploaded patient ${patientId} to IPFS`);
+    logger.info(`✅ Successfully uploaded patient ${patientId} histopathology to IPFS`);
 
-    // Create URLs for viewing decrypted images
+    // Create URL for viewing decrypted image
     const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
     const decryptedViewUrls = {
-      xray: `${baseUrl}/api/ipfs/view/${patientId}/xray`,
-      histopathology: `${baseUrl}/api/ipfs/view/${patientId}/histopathology`,
-      ultrasound: `${baseUrl}/api/ipfs/view/${patientId}/ultrasound`
+      histopathology: `${baseUrl}/api/ipfs/view/${patientId}/histopathology`
     };
 
     res.json({
       success: true,
-      message: 'Patient images uploaded to IPFS successfully',
+      message: 'Patient histopathology image uploaded to IPFS successfully',
       patientId,
       ipfsCids,
-      ipfsGatewayUrls, // Raw encrypted files (for download)
-      decryptedViewUrls // Decrypted images for viewing
+      ipfsGatewayUrls,
+      decryptedViewUrls
     });
 
   } catch (error) {

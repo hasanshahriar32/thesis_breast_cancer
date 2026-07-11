@@ -1,3 +1,11 @@
+/**
+ * Patient Routes for Histopathology Classification
+ * 
+ * Single-modality: Histopathology images only
+ * Model: EfficientNet-B0 + Coordinate Attention
+ * Task: Binary Classification (Benign vs Malignant)
+ */
+
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
@@ -11,7 +19,7 @@ const encryptionService = require('../services/encryption');
 const patientService = require('../services/patient');
 const blobStorage = require('../services/blobStorage');
 
-// Configure multer for in-memory file uploads (no local storage)
+// Configure multer for in-memory file uploads
 const storage = multer.memoryStorage();
 
 const upload = multer({
@@ -20,30 +28,35 @@ const upload = multer({
     fileSize: 50 * 1024 * 1024, // 50MB limit
   },
   fileFilter: (req, file, cb) => {
-    const allowedTypes = ['.jpg', '.jpeg', '.png', '.dcm', '.dicom'];
+    const allowedTypes = ['.jpg', '.jpeg', '.png', '.tif', '.tiff'];
     const ext = path.extname(file.originalname).toLowerCase();
     if (allowedTypes.includes(ext)) {
       cb(null, true);
     } else {
-      cb(new Error('Invalid file type. Only medical images allowed.'));
+      cb(new Error('Invalid file type. Only image files (jpg, jpeg, png, tif, tiff) are allowed for histopathology.'));
     }
   }
 });
 
-// Upload and process patient data
-router.post('/upload', upload.fields([
-  { name: 'xray', maxCount: 5 },
-  { name: 'histopathology', maxCount: 5 },
-  { name: 'ultrasound', maxCount: 5 }
-]), async (req, res) => {
+/**
+ * @swagger
+ * /api/patients/upload:
+ *   post:
+ *     summary: Upload histopathology image for a patient
+ */
+router.post('/upload', upload.single('histopathology'), async (req, res) => {
   try {
-    logger.info('Processing new patient upload');
+    logger.info('Processing new histopathology image upload');
     
     const { patient_metadata } = req.body;
-    const files = req.files;
+    const file = req.file;
     
     if (!patient_metadata) {
       return res.status(400).json({ error: 'Patient metadata required' });
+    }
+    
+    if (!file) {
+      return res.status(400).json({ error: 'Histopathology image required' });
     }
     
     const metadata = JSON.parse(patient_metadata);
@@ -51,60 +64,63 @@ router.post('/upload', upload.fields([
     // Generate unique patient ID
     const patientId = crypto.randomUUID();
     
-    // Process uploaded files and extract features
-    const processedData = await processPatientFiles(files, metadata, patientId);
+    // Process the histopathology image
+    const processedData = await processHistopathologyFile(file, metadata, patientId);
     
-    // Save patient data securely
+    // Save patient data
     const savedPatient = await patientService.createPatient({
       id: patientId,
       metadata: metadata,
-      files: processedData.files,
+      files: { histopathology: [processedData.file] },
       features: processedData.features,
       hospital_id: process.env.HOSPITAL_ID
     });
     
-    // Format response with Vercel Blob URLs prominently
-    const fileUrls = {};
-    for (const [modality, files] of Object.entries(processedData.files)) {
-      if (files && files.length > 0 && files[0].blob_storage) {
-        fileUrls[modality] = {
-          url: files[0].blob_storage.url,
-          downloadUrl: files[0].blob_storage.downloadUrl,
-          encrypted: files[0].encrypted || false,
-          size: files[0].size,
-          checksum: files[0].checksum
-        };
-      }
-    }
-    
-    res.status(201).json({
+    // Format response
+    const response = {
       success: true,
       patient_id: patientId,
       metadata: metadata,
-      file_urls: fileUrls,
-      features_extracted: processedData.features ? Object.keys(processedData.features).length : 0,
-      message: 'Patient data uploaded and processed successfully'
-    });
+      histopathology: {
+        url: processedData.file.blob_storage?.url,
+        encrypted: processedData.file.encrypted || false,
+        size: processedData.file.size,
+        checksum: processedData.file.checksum
+      },
+      prediction: processedData.prediction,
+      model_info: {
+        architecture: 'EfficientNet-B0 + CoordinateAttention',
+        task: 'Binary Classification (Benign/Malignant)',
+        input_size: '160×160'
+      },
+      message: 'Histopathology image uploaded and processed successfully'
+    };
+    
+    res.status(201).json(response);
     
   } catch (error) {
-    logger.error('Error processing patient upload:', error);
+    logger.error('Error processing histopathology upload:', error);
     res.status(500).json({
-      error: 'Failed to process patient upload',
+      error: 'Failed to process histopathology upload',
       message: error.message
     });
   }
 });
 
-// Get patient list
+/**
+ * @swagger
+ * /api/patients/list:
+ *   get:
+ *     summary: Get list of patients with histopathology data
+ */
 router.get('/list', async (req, res) => {
   try {
-    const { page = 1, limit = 50, encrypted = false } = req.query;
+    const { page = 1, limit = 50 } = req.query;
     
     const patients = await patientService.getPatients({
       page: parseInt(page),
       limit: parseInt(limit),
-      hospital_id: process.env.HOSPITAL_ID,
-      include_encrypted: encrypted === 'true'
+      hospital_id: process.env.HOSPITAL_ID
     });
     
     res.json({
@@ -127,15 +143,19 @@ router.get('/list', async (req, res) => {
   }
 });
 
-// Get specific patient data
+/**
+ * @swagger
+ * /api/patients/:patientId:
+ *   get:
+ *     summary: Get specific patient data
+ */
 router.get('/:patientId', async (req, res) => {
   try {
     const { patientId } = req.params;
-    const { include_features = false, decrypt = false } = req.query;
+    const { include_features = false } = req.query;
     
     const patient = await patientService.getPatient(patientId, {
       include_features: include_features === 'true',
-      decrypt: decrypt === 'true',
       hospital_id: process.env.HOSPITAL_ID
     });
     
@@ -143,31 +163,27 @@ router.get('/:patientId', async (req, res) => {
       return res.status(404).json({ error: 'Patient not found' });
     }
     
-    // Format response with clean Vercel Blob URLs
+    // Format response
     const formattedPatient = {
       patient_id: patient.id,
       metadata: patient.metadata,
-      file_urls: {},
+      histopathology: null,
+      prediction: patient.prediction,
       features: include_features === 'true' ? patient.features : undefined,
       hospital_id: patient.hospital_id,
       created_at: patient.created_at,
-      updated_at: patient.updated_at,
-      status: patient.status
+      updated_at: patient.updated_at
     };
     
-    // Extract clean Vercel Blob URLs
-    if (patient.files) {
-      for (const [modality, files] of Object.entries(patient.files)) {
-        if (files && files.length > 0 && files[0].blob_storage) {
-          formattedPatient.file_urls[modality] = {
-            url: files[0].blob_storage.url,
-            downloadUrl: files[0].blob_storage.downloadUrl,
-            encrypted: files[0].encrypted || false,
-            size: files[0].size,
-            checksum: files[0].checksum
-          };
-        }
-      }
+    // Extract histopathology file info
+    if (patient.files?.histopathology?.[0]) {
+      const file = patient.files.histopathology[0];
+      formattedPatient.histopathology = {
+        url: file.blob_storage?.url,
+        encrypted: file.encrypted || false,
+        size: file.size,
+        checksum: file.checksum
+      };
     }
     
     res.json({
@@ -184,13 +200,17 @@ router.get('/:patientId', async (req, res) => {
   }
 });
 
-// Extract features for specific patient
-router.post('/:patientId/extract-features', async (req, res) => {
+/**
+ * @swagger
+ * /api/patients/:patientId/classify:
+ *   post:
+ *     summary: Run classification on patient's histopathology image
+ */
+router.post('/:patientId/classify', async (req, res) => {
   try {
     const { patientId } = req.params;
-    const { modalities = ['xray', 'histopathology', 'ultrasound'] } = req.body;
     
-    logger.info(`Extracting features for patient ${patientId}`);
+    logger.info(`Running histopathology classification for patient ${patientId}`);
     
     const patient = await patientService.getPatient(patientId, {
       hospital_id: process.env.HOSPITAL_ID
@@ -200,37 +220,45 @@ router.post('/:patientId/extract-features', async (req, res) => {
       return res.status(404).json({ error: 'Patient not found' });
     }
     
-    const features = await featureExtractor.extractPatientFeatures(patient, modalities);
+    // Extract features and classify
+    const result = await featureExtractor.extractPatientFeatures(patient);
     
-    // Update patient with extracted features
-    await patientService.updatePatientFeatures(patientId, features);
+    // Update patient with prediction
+    await patientService.updatePatient(patientId, {
+      prediction: result.prediction,
+      features: result.features,
+      classification_timestamp: new Date().toISOString()
+    });
     
     res.json({
       success: true,
       patient_id: patientId,
-      features_extracted: Object.keys(features).length,
-      modalities_processed: modalities,
-      features
+      prediction: result.prediction,
+      model: result.model,
+      processing_time_ms: result.processing_time_ms
     });
     
   } catch (error) {
-    logger.error('Error extracting features:', error);
+    logger.error('Error classifying patient:', error);
     res.status(500).json({
-      error: 'Failed to extract features',
+      error: 'Failed to classify histopathology image',
       message: error.message
     });
   }
 });
 
-// Delete patient data
+/**
+ * @swagger
+ * /api/patients/:patientId:
+ *   delete:
+ *     summary: Delete patient data
+ */
 router.delete('/:patientId', async (req, res) => {
   try {
     const { patientId } = req.params;
-    const { secure_delete = true } = req.query;
     
     const result = await patientService.deletePatient(patientId, {
-      hospital_id: process.env.HOSPITAL_ID,
-      secure_delete: secure_delete === 'true'
+      hospital_id: process.env.HOSPITAL_ID
     });
     
     if (!result.deleted) {
@@ -239,8 +267,7 @@ router.delete('/:patientId', async (req, res) => {
     
     res.json({
       success: true,
-      message: 'Patient data deleted successfully',
-      files_removed: result.files_removed
+      message: 'Patient data deleted successfully'
     });
     
   } catch (error) {
@@ -252,107 +279,176 @@ router.delete('/:patientId', async (req, res) => {
   }
 });
 
-// Helper function to process uploaded files (in-memory, no local storage)
-async function processPatientFiles(files, metadata, patientId) {
-  const processedFiles = {};
-  const extractedFeatures = {};
-  
-  // Process each modality
-  for (const [modality, fileList] of Object.entries(files)) {
-    if (!fileList || fileList.length === 0) continue;
+/**
+ * @swagger
+ * /api/patients/batch/classify:
+ *   post:
+ *     summary: Batch classify multiple patients
+ */
+router.post('/batch/classify', async (req, res) => {
+  try {
+    const { patient_ids } = req.body;
     
-    processedFiles[modality] = [];
-    
-    for (const file of fileList) {
-      // Calculate checksum from buffer
-      const checksum = calculateBufferChecksum(file.buffer);
-      
-      const processedFile = {
-        original_name: file.originalname,
-        filename: `${modality}-${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(file.originalname)}`,
-        size: file.size,
-        upload_date: new Date().toISOString(),
-        checksum: checksum
-      };
-      
-      // Encrypt and upload to Vercel Blob Storage
-      if (process.env.ENCRYPT_FILES === 'true') {
-        try {
-          // Encrypt the file buffer
-          const encryptedData = await encryptionService.encryptBuffer(file.buffer);
-          
-          processedFile.encrypted_path = {
-            original_size: file.size,
-            encrypted_size: encryptedData.encryptedBuffer.length,
-            checksum: encryptedData.checksum,
-            encryption_timestamp: new Date().toISOString()
-          };
-          processedFile.encrypted = true;
-          
-          // Upload encrypted buffer directly to Vercel Blob Storage
-          const blobPath = `patients/${patientId}/${modality}-${Date.now()}.encrypted`;
-          const blobResult = await blobStorage.uploadBuffer(
-            encryptedData.encryptedBuffer,
-            blobPath
-          );
-          
-          // Store Vercel Blob URL (primary storage)
-          processedFile.blob_storage = {
-            url: blobResult.url,
-            downloadUrl: blobResult.downloadUrl,
-            pathname: blobResult.pathname,
-            size: blobResult.size,
-            uploadedAt: blobResult.uploadedAt
-          };
-          
-          logger.info(`✓ Uploaded encrypted ${modality} to Vercel Blob: ${blobResult.url}`);
-        } catch (error) {
-          logger.error(`Failed to encrypt/upload ${modality} to Vercel Blob:`, error.message);
-          throw error; // Fail if blob storage fails - it's the primary storage now
-        }
-      } else {
-        // Upload unencrypted file directly to Vercel Blob Storage
-        try {
-          const blobPath = `patients/${patientId}/${modality}-${Date.now()}${path.extname(file.originalname)}`;
-          const blobResult = await blobStorage.uploadBuffer(
-            file.buffer,
-            blobPath
-          );
-          
-          processedFile.blob_storage = {
-            url: blobResult.url,
-            downloadUrl: blobResult.downloadUrl,
-            pathname: blobResult.pathname,
-            size: blobResult.size,
-            uploadedAt: blobResult.uploadedAt
-          };
-          
-          logger.info(`✓ Uploaded ${modality} to Vercel Blob: ${blobResult.url}`);
-        } catch (error) {
-          logger.error(`Failed to upload ${modality} to Vercel Blob:`, error.message);
-          throw error;
-        }
-      }
-      
-      processedFiles[modality].push(processedFile);
+    if (!patient_ids || !Array.isArray(patient_ids)) {
+      return res.status(400).json({ error: 'patient_ids array required' });
     }
     
-    // Extract features for this modality using in-memory buffers
+    logger.info(`Batch classifying ${patient_ids.length} patients`);
+    
+    const results = [];
+    
+    for (const patientId of patient_ids) {
+      try {
+        const patient = await patientService.getPatient(patientId, {
+          hospital_id: process.env.HOSPITAL_ID
+        });
+        
+        if (!patient) {
+          results.push({ patient_id: patientId, error: 'Not found' });
+          continue;
+        }
+        
+        const result = await featureExtractor.extractPatientFeatures(patient);
+        
+        await patientService.updatePatient(patientId, {
+          prediction: result.prediction,
+          features: result.features
+        });
+        
+        results.push({
+          patient_id: patientId,
+          prediction: result.prediction,
+          success: true
+        });
+        
+      } catch (error) {
+        results.push({
+          patient_id: patientId,
+          error: error.message,
+          success: false
+        });
+      }
+    }
+    
+    res.json({
+      success: true,
+      total: patient_ids.length,
+      processed: results.filter(r => r.success).length,
+      failed: results.filter(r => !r.success).length,
+      results
+    });
+    
+  } catch (error) {
+    logger.error('Error in batch classification:', error);
+    res.status(500).json({
+      error: 'Batch classification failed',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * Process histopathology file upload
+ */
+async function processHistopathologyFile(file, metadata, patientId) {
+  const checksum = calculateBufferChecksum(file.buffer);
+  
+  const processedFile = {
+    original_name: file.originalname,
+    filename: `histopathology-${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(file.originalname)}`,
+    size: file.size,
+    upload_date: new Date().toISOString(),
+    checksum: checksum
+  };
+  
+  let prediction = null;
+  let features = null;
+  
+  // Encrypt and upload to blob storage
+  if (process.env.ENCRYPT_FILES === 'true') {
     try {
-      const features = await featureExtractor.extractModalityFeaturesFromBuffers(fileList, modality);
-      extractedFeatures[modality] = features;
+      const encryptedData = await encryptionService.encryptBuffer(file.buffer);
+      
+      processedFile.encrypted = true;
+      processedFile.encrypted_info = {
+        original_size: file.size,
+        encrypted_size: encryptedData.encryptedBuffer.length,
+        checksum: encryptedData.checksum
+      };
+      
+      // Upload encrypted buffer to blob storage
+      const blobPath = `patients/${patientId}/histopathology-${Date.now()}.encrypted`;
+      const blobResult = await blobStorage.uploadBuffer(
+        encryptedData.encryptedBuffer,
+        blobPath
+      );
+      
+      processedFile.blob_storage = {
+        url: blobResult.url,
+        downloadUrl: blobResult.downloadUrl,
+        pathname: blobResult.pathname,
+        size: blobResult.size,
+        uploadedAt: blobResult.uploadedAt
+      };
+      
+      logger.info(`✓ Uploaded encrypted histopathology to blob: ${blobResult.url}`);
+      
     } catch (error) {
-      logger.warn(`Failed to extract features for ${modality}:`, error.message);
+      logger.error('Failed to encrypt/upload histopathology:', error.message);
+      throw error;
+    }
+  } else {
+    // Upload unencrypted
+    try {
+      const blobPath = `patients/${patientId}/histopathology-${Date.now()}${path.extname(file.originalname)}`;
+      const blobResult = await blobStorage.uploadBuffer(file.buffer, blobPath);
+      
+      processedFile.blob_storage = {
+        url: blobResult.url,
+        downloadUrl: blobResult.downloadUrl,
+        pathname: blobResult.pathname,
+        size: blobResult.size,
+        uploadedAt: blobResult.uploadedAt
+      };
+      
+      logger.info(`✓ Uploaded histopathology to blob: ${blobResult.url}`);
+      
+    } catch (error) {
+      logger.error('Failed to upload histopathology:', error.message);
+      throw error;
     }
   }
   
+  // Run inference on the uploaded image
+  try {
+    // Save temp file for inference
+    const tempPath = path.join('/tmp', `histo_${Date.now()}.png`);
+    await fs.writeFile(tempPath, file.buffer);
+    
+    const inferenceResult = await featureExtractor.extractFromFile(tempPath);
+    
+    prediction = inferenceResult.prediction;
+    features = inferenceResult.features;
+    
+    // Clean up
+    await fs.unlink(tempPath).catch(() => {});
+    
+    logger.info(`✓ Classification result: ${prediction?.label} (${(prediction?.confidence * 100).toFixed(1)}%)`);
+    
+  } catch (error) {
+    logger.warn('Feature extraction failed:', error.message);
+  }
+  
   return {
-    files: processedFiles,
-    features: extractedFeatures
+    file: processedFile,
+    prediction,
+    features
   };
 }
 
-// Helper function to calculate buffer checksum
+/**
+ * Calculate buffer checksum
+ */
 function calculateBufferChecksum(buffer) {
   const hashSum = crypto.createHash('sha256');
   hashSum.update(buffer);

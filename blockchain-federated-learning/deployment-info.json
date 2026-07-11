@@ -1,0 +1,9 @@
+{
+  "network": "sepolia",
+  "contractAddress": "0x1BE44922c9505E492eA93cfA4a673CE8ea106Ea1",
+  "ownerAddress": "0x8cc0861616B52b115EAa64C1c8313AfdC4fF1d42",
+  "requiredSubmissions": 3,
+  "minSamplesPerUpdate": 500,
+  "deploymentTime": "2026-02-13T19:58:02.286Z",
+  "blockNumber": 10254150
+}

@@ -7,8 +7,13 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
 
 /**
  * @title FederatedModelRegistry
- * @dev Enhanced smart contract for coordinating privacy-preserving federated learning
- * for multi-modal breast cancer diagnosis across multiple hospitals
+ * @dev Smart contract for coordinating privacy-preserving federated learning
+ * for histopathology-based breast cancer classification across multiple hospitals
+ * 
+ * Model Architecture: EfficientNet-B0 with Coordinate Attention
+ * Task: Binary Classification (Benign vs Malignant)
+ * Framework: PyTorch
+ * Input: 160x160 histopathology images
  */
 contract FederatedModelRegistry is Ownable, ReentrancyGuard, Pausable {
     
@@ -25,38 +30,39 @@ contract FederatedModelRegistry is Ownable, ReentrancyGuard, Pausable {
     
     struct GlobalModel {
         uint256 version;
-        string fusionModelCID; // IPFS CID for fusion model weights
-        bytes32 fusionModelHash; // SHA-256 hash for fusion model verification
-        string extractorXrayCID; // IPFS CID for X-Ray extractor weights
-        string extractorHistoCID; // IPFS CID for Histopathology extractor weights
-        string extractorUltraCID; // IPFS CID for Ultrasound extractor weights
-        bytes32 extractorsHash; // Combined hash of all extractors
+        string modelWeightsCID; // IPFS CID for EfficientNet-B0 + CoordAttention model weights
+        bytes32 modelHash; // SHA-256 hash for model verification
         uint256 timestamp;
         uint256 totalSamples; // Total samples used across all participants
         uint256 accuracy; // Stored as percentage * 100 (e.g., 9550 = 95.50%)
+        uint256 aucScore; // AUC-ROC score * 10000 (e.g., 9800 = 0.9800)
+        uint256 sensitivity; // Sensitivity/Recall * 10000
+        uint256 specificity; // Specificity * 10000
         uint256 contributorCount; // Number of hospitals that contributed
         uint256 parentVersion; // Previous model version (lineage tracking)
     }
     
     struct ModelUpdate {
         address contributor; // MetaMask wallet address
-        string fusionModelCID; // IPFS CID for encrypted fusion model update
-        bytes32 fusionModelHash; // SHA-256 hash for fusion model verification
-        string extractorWeightsCID; // IPFS CID for all three feature extractors (packaged)
-        bytes32 extractorsHash; // Hash of extractor package
-        uint256 dataSampleCount; // Number of samples (no patient data)
+        string modelWeightsCID; // IPFS CID for encrypted model weights
+        bytes32 modelHash; // SHA-256 hash for model verification
+        uint256 dataSampleCount; // Number of histopathology samples (no patient data)
         uint256 localAccuracy; // Hospital's local model accuracy (percentage * 100)
+        uint256 localAUC; // Hospital's local AUC score * 10000
+        uint256 localSensitivity; // Sensitivity for malignant detection * 10000
+        uint256 localSpecificity; // Specificity for benign detection * 10000
         uint256 round; // Training round number
         uint256 submissionTime;
         uint256 trainingDuration; // Time spent training (in seconds)
     }
     
     struct WeightMetadata {
-        uint256 totalParameters; // Total number of parameters in model
-        uint256 fusionModelSize; // Size in bytes
-        uint256 extractorTotalSize; // Combined size of all extractors
-        string framework; // "TensorFlow", "PyTorch", etc.
-        string version; // Framework version
+        uint256 totalParameters; // Total number of parameters (~5.9M for EfficientNet-B0)
+        uint256 modelSize; // Model file size in bytes
+        uint256 inputSize; // Input image size (160 for 160x160)
+        string framework; // "PyTorch"
+        string version; // Framework version (e.g., "2.0.0")
+        string architecture; // "EfficientNet-B0 + CoordinateAttention"
     }
     
     // --- State Variables ---
@@ -83,7 +89,7 @@ contract FederatedModelRegistry is Ownable, ReentrancyGuard, Pausable {
     
     // Configuration
     uint256 public requiredSubmissions;
-    uint256 public minSamplesPerUpdate; // Minimum samples required per update
+    uint256 public minSamplesPerUpdate; // Minimum histopathology samples required per update
     address public oracle;
     
     // --- Events ---
@@ -92,12 +98,12 @@ contract FederatedModelRegistry is Ownable, ReentrancyGuard, Pausable {
     event ParticipantRemoved(address indexed participant);
     event ParticipantUpdated(address indexed participant, string name, string region);
     event AggregationRequired(uint256 indexed round, uint256 submissionCount);
-    event NewGlobalModel(uint256 indexed version, string fusionCID, uint256 accuracy, uint256 contributorCount);
-    event UpdateSubmitted(address indexed contributor, uint256 indexed round, uint256 sampleCount, uint256 accuracy);
+    event NewGlobalModel(uint256 indexed version, string modelCID, uint256 accuracy, uint256 aucScore, uint256 contributorCount);
+    event UpdateSubmitted(address indexed contributor, uint256 indexed round, uint256 sampleCount, uint256 accuracy, uint256 auc);
     event OracleUpdated(address indexed newOracle);
     event RequiredSubmissionsUpdated(uint256 newRequired);
     event MinSamplesUpdated(uint256 newMinSamples);
-    event WeightMetadataStored(uint256 indexed version, uint256 totalParameters);
+    event WeightMetadataStored(uint256 indexed version, uint256 totalParameters, string architecture);
     
     // --- Constructor ---
     
@@ -206,39 +212,44 @@ contract FederatedModelRegistry is Ownable, ReentrancyGuard, Pausable {
     // --- Model Submission Functions ---
     
     /**
-     * @notice Submit local model update with enhanced weight tracking
-     * @param _fusionCID IPFS CID of encrypted fusion model weights
-     * @param _fusionHash SHA-256 hash of the fusion model for verification
-     * @param _extractorCID IPFS CID of feature extractor weights package (xray, histo, ultra)
-     * @param _extractorsHash SHA-256 hash of extractor package
-     * @param _sampleCount Number of patient samples used (no PII)
+     * @notice Submit local model update for histopathology classification
+     * @param _modelCID IPFS CID of encrypted EfficientNet-B0 model weights
+     * @param _modelHash SHA-256 hash of the model for verification
+     * @param _sampleCount Number of histopathology samples used (no PII)
      * @param _localAccuracy Hospital's local model accuracy (percentage * 100)
+     * @param _localAUC Hospital's local AUC-ROC score (* 10000)
+     * @param _localSensitivity Sensitivity for malignant detection (* 10000)
+     * @param _localSpecificity Specificity for benign detection (* 10000)
      * @param _trainingDuration Time spent training in seconds
      */
     function submitUpdate(
-        string memory _fusionCID,
-        bytes32 _fusionHash,
-        string memory _extractorCID,
-        bytes32 _extractorsHash,
+        string memory _modelCID,
+        bytes32 _modelHash,
         uint256 _sampleCount,
         uint256 _localAccuracy,
+        uint256 _localAUC,
+        uint256 _localSensitivity,
+        uint256 _localSpecificity,
         uint256 _trainingDuration
     ) external onlyParticipant whenNotPaused nonReentrant {
         require(!hasSubmitted[currentRound][msg.sender], "Update already submitted for this round");
-        require(bytes(_fusionCID).length > 0, "Empty fusion model CID");
-        require(bytes(_extractorCID).length > 0, "Empty extractor CID");
-        require(_sampleCount >= minSamplesPerUpdate, "Insufficient samples");
+        require(bytes(_modelCID).length > 0, "Empty model CID");
+        require(_sampleCount >= minSamplesPerUpdate, "Insufficient histopathology samples");
         require(_localAccuracy <= 10000, "Accuracy cannot exceed 100%");
+        require(_localAUC <= 10000, "AUC cannot exceed 1.0");
+        require(_localSensitivity <= 10000, "Sensitivity cannot exceed 100%");
+        require(_localSpecificity <= 10000, "Specificity cannot exceed 100%");
         require(hospitalInfo[msg.sender].isActive, "Hospital is not active");
         
         roundUpdates[currentRound].push(ModelUpdate({
             contributor: msg.sender,
-            fusionModelCID: _fusionCID,
-            fusionModelHash: _fusionHash,
-            extractorWeightsCID: _extractorCID,
-            extractorsHash: _extractorsHash,
+            modelWeightsCID: _modelCID,
+            modelHash: _modelHash,
             dataSampleCount: _sampleCount,
             localAccuracy: _localAccuracy,
+            localAUC: _localAUC,
+            localSensitivity: _localSensitivity,
+            localSpecificity: _localSpecificity,
             round: currentRound,
             submissionTime: block.timestamp,
             trainingDuration: _trainingDuration
@@ -252,7 +263,7 @@ contract FederatedModelRegistry is Ownable, ReentrancyGuard, Pausable {
         hospitalTotalSamples[msg.sender] += _sampleCount;
         hospitalContributions[msg.sender].push(currentRound);
         
-        emit UpdateSubmitted(msg.sender, currentRound, _sampleCount, _localAccuracy);
+        emit UpdateSubmitted(msg.sender, currentRound, _sampleCount, _localAccuracy, _localAUC);
         
         // If submissions threshold is met, trigger aggregation
         if (roundUpdates[currentRound].length >= requiredSubmissions) {
@@ -261,30 +272,28 @@ contract FederatedModelRegistry is Ownable, ReentrancyGuard, Pausable {
     }
     
     /**
-     * @notice Publish the newly aggregated global model with enhanced metadata
-     * @param _fusionCID IPFS CID of the aggregated fusion model
-     * @param _fusionHash SHA-256 hash of the fusion model
-     * @param _extractorXrayCID IPFS CID for aggregated X-Ray extractor
-     * @param _extractorHistoCID IPFS CID for aggregated Histopathology extractor
-     * @param _extractorUltraCID IPFS CID for aggregated Ultrasound extractor
-     * @param _extractorsHash Combined hash of all three extractors
+     * @notice Publish the newly aggregated global histopathology model
+     * @param _modelCID IPFS CID of the aggregated EfficientNet-B0 model
+     * @param _modelHash SHA-256 hash of the model
      * @param _accuracy Model accuracy (percentage * 100, e.g., 9550 = 95.50%)
+     * @param _aucScore AUC-ROC score (* 10000, e.g., 9800 = 0.9800)
+     * @param _sensitivity Sensitivity for malignant detection (* 10000)
+     * @param _specificity Specificity for benign detection (* 10000)
      */
     function publishNewGlobalModel(
-        string memory _fusionCID,
-        bytes32 _fusionHash,
-        string memory _extractorXrayCID,
-        string memory _extractorHistoCID,
-        string memory _extractorUltraCID,
-        bytes32 _extractorsHash,
-        uint256 _accuracy
+        string memory _modelCID,
+        bytes32 _modelHash,
+        uint256 _accuracy,
+        uint256 _aucScore,
+        uint256 _sensitivity,
+        uint256 _specificity
     ) external onlyOracle whenNotPaused {
-        require(bytes(_fusionCID).length > 0, "Empty fusion CID");
-        require(bytes(_extractorXrayCID).length > 0, "Empty X-Ray extractor CID");
-        require(bytes(_extractorHistoCID).length > 0, "Empty Histo extractor CID");
-        require(bytes(_extractorUltraCID).length > 0, "Empty Ultra extractor CID");
+        require(bytes(_modelCID).length > 0, "Empty model CID");
         require(roundUpdates[currentRound].length >= requiredSubmissions, "Not enough submissions");
         require(_accuracy <= 10000, "Accuracy cannot exceed 100%");
+        require(_aucScore <= 10000, "AUC cannot exceed 1.0");
+        require(_sensitivity <= 10000, "Sensitivity cannot exceed 100%");
+        require(_specificity <= 10000, "Specificity cannot exceed 100%");
         
         // Calculate total samples and contributor count from all participants
         uint256 totalSamples = 0;
@@ -299,58 +308,60 @@ contract FederatedModelRegistry is Ownable, ReentrancyGuard, Pausable {
         
         globalModels.push(GlobalModel({
             version: currentRound + 1,
-            fusionModelCID: _fusionCID,
-            fusionModelHash: _fusionHash,
-            extractorXrayCID: _extractorXrayCID,
-            extractorHistoCID: _extractorHistoCID,
-            extractorUltraCID: _extractorUltraCID,
-            extractorsHash: _extractorsHash,
+            modelWeightsCID: _modelCID,
+            modelHash: _modelHash,
             timestamp: block.timestamp,
             totalSamples: totalSamples,
             accuracy: _accuracy,
+            aucScore: _aucScore,
+            sensitivity: _sensitivity,
+            specificity: _specificity,
             contributorCount: contributorCount,
             parentVersion: parentVersion
         }));
         
-        emit NewGlobalModel(currentRound + 1, _fusionCID, _accuracy, contributorCount);
+        emit NewGlobalModel(currentRound + 1, _modelCID, _accuracy, _aucScore, contributorCount);
         
         currentRound++; // Move to the next round
     }
     
     /**
-     * @notice Store weight metadata for a model version
+     * @notice Store weight metadata for histopathology model version
      * @param _version Model version
-     * @param _totalParams Total number of parameters
-     * @param _fusionSize Fusion model size in bytes
-     * @param _extractorSize Combined extractor size in bytes
-     * @param _framework ML framework used (e.g., "TensorFlow")
-     * @param _frameworkVersion Framework version (e.g., "2.15.0")
+     * @param _totalParams Total number of parameters (~5.9M for EfficientNet-B0)
+     * @param _modelSize Model file size in bytes
+     * @param _inputSize Input image size (160 for 160x160)
+     * @param _framework ML framework used (e.g., "PyTorch")
+     * @param _frameworkVersion Framework version (e.g., "2.0.0")
+     * @param _architecture Model architecture (e.g., "EfficientNet-B0 + CoordinateAttention")
      */
     function storeWeightMetadata(
         uint256 _version,
         uint256 _totalParams,
-        uint256 _fusionSize,
-        uint256 _extractorSize,
+        uint256 _modelSize,
+        uint256 _inputSize,
         string memory _framework,
-        string memory _frameworkVersion
+        string memory _frameworkVersion,
+        string memory _architecture
     ) external onlyOracle {
         require(_version < globalModels.length, "Invalid version");
         
         modelMetadata[_version] = WeightMetadata({
             totalParameters: _totalParams,
-            fusionModelSize: _fusionSize,
-            extractorTotalSize: _extractorSize,
+            modelSize: _modelSize,
+            inputSize: _inputSize,
             framework: _framework,
-            version: _frameworkVersion
+            version: _frameworkVersion,
+            architecture: _architecture
         });
         
-        emit WeightMetadataStored(_version, _totalParams);
+        emit WeightMetadataStored(_version, _totalParams, _architecture);
     }
     
     // --- Query Functions ---
     
     /**
-     * @notice Get the latest global model
+     * @notice Get the latest global histopathology model
      */
     function getLatestGlobalModel() external view returns (GlobalModel memory) {
         require(globalModels.length > 0, "No models published yet");
@@ -539,43 +550,50 @@ contract FederatedModelRegistry is Ownable, ReentrancyGuard, Pausable {
     }
     
     /**
-     * @notice Initialize the first global model (genesis) with separate extractors
-     * @param _fusionCID IPFS CID of the initial fusion model
-     * @param _fusionHash SHA-256 hash of the fusion model
-     * @param _extractorXrayCID IPFS CID for X-Ray extractor
-     * @param _extractorHistoCID IPFS CID for Histopathology extractor
-     * @param _extractorUltraCID IPFS CID for Ultrasound extractor
-     * @param _extractorsHash Combined hash of all extractors
+     * @notice Update the genesis model CID (emergency admin function)
+     * @dev Only use this to fix incorrect IPFS uploads, not for normal updates
+     * @param _modelCID New IPFS CID for the genesis model
+     * @param _modelHash New SHA-256 hash of the model
+     */
+    function updateGenesisModelCID(
+        string memory _modelCID,
+        bytes32 _modelHash
+    ) external onlyOwner {
+        require(globalModels.length > 0, "Genesis model not initialized");
+        require(bytes(_modelCID).length > 0, "Empty model CID");
+        
+        globalModels[0].modelWeightsCID = _modelCID;
+        globalModels[0].modelHash = _modelHash;
+        
+        emit NewGlobalModel(0, _modelCID, 0, 0, 0);
+    }
+    
+    /**
+     * @notice Initialize the first global histopathology model (genesis)
+     * @param _modelCID IPFS CID of the initial EfficientNet-B0 model
+     * @param _modelHash SHA-256 hash of the model
      */
     function initializeGenesisModel(
-        string memory _fusionCID,
-        bytes32 _fusionHash,
-        string memory _extractorXrayCID,
-        string memory _extractorHistoCID,
-        string memory _extractorUltraCID,
-        bytes32 _extractorsHash
+        string memory _modelCID,
+        bytes32 _modelHash
     ) external onlyOwner {
         require(globalModels.length == 0, "Genesis model already initialized");
-        require(bytes(_fusionCID).length > 0, "Empty fusion CID");
-        require(bytes(_extractorXrayCID).length > 0, "Empty X-Ray extractor CID");
-        require(bytes(_extractorHistoCID).length > 0, "Empty Histo extractor CID");
-        require(bytes(_extractorUltraCID).length > 0, "Empty Ultra extractor CID");
+        require(bytes(_modelCID).length > 0, "Empty model CID");
         
         globalModels.push(GlobalModel({
             version: 0,
-            fusionModelCID: _fusionCID,
-            fusionModelHash: _fusionHash,
-            extractorXrayCID: _extractorXrayCID,
-            extractorHistoCID: _extractorHistoCID,
-            extractorUltraCID: _extractorUltraCID,
-            extractorsHash: _extractorsHash,
+            modelWeightsCID: _modelCID,
+            modelHash: _modelHash,
             timestamp: block.timestamp,
             totalSamples: 0,
             accuracy: 0,
+            aucScore: 0,
+            sensitivity: 0,
+            specificity: 0,
             contributorCount: 0,
             parentVersion: 0
         }));
         
-        emit NewGlobalModel(0, _fusionCID, 0, 0);
+        emit NewGlobalModel(0, _modelCID, 0, 0, 0);
     }
 }

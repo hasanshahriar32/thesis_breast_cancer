@@ -1,3 +1,11 @@
+/**
+ * Blockchain Routes for Federated Learning
+ * 
+ * Contract: FederatedModelRegistry
+ * Network: Ethereum Sepolia Testnet
+ * Model: EfficientNet-B0 + Coordinate Attention (Histopathology)
+ */
+
 const express = require('express');
 const router = express.Router();
 const { ethers } = require('ethers');
@@ -15,7 +23,6 @@ class BlockchainService {
     if (this.isConnected) return;
 
     try {
-      // Connect to Ethereum network (Sepolia testnet)
       const rpcUrl = process.env.ETHEREUM_RPC_URL;
       
       if (!rpcUrl || rpcUrl === 'mock') {
@@ -25,7 +32,7 @@ class BlockchainService {
       }
 
       logger.info(`Connecting to Ethereum network: ${rpcUrl}`);
-      this.provider = new ethers.providers.JsonRpcProvider(rpcUrl);
+      this.provider = new ethers.JsonRpcProvider(rpcUrl);
 
       // Test connection
       const network = await this.provider.getNetwork();
@@ -40,19 +47,18 @@ class BlockchainService {
       }
 
       this.wallet = new ethers.Wallet(privateKey, this.provider);
-      const balance = await this.wallet.getBalance();
+      const balance = await this.provider.getBalance(this.wallet.address);
       logger.info(`✓ Wallet address: ${this.wallet.address}`);
-      logger.info(`✓ Wallet balance: ${ethers.utils.formatEther(balance)} ETH`);
+      logger.info(`✓ Wallet balance: ${ethers.formatEther(balance)} ETH`);
 
       // Load contract
       const contractAddress = process.env.CONTRACT_ADDRESS;
-      const contractABI = this.getContractABI();
 
-      if (contractAddress && contractAddress !== 'YOUR_DEPLOYED_CONTRACT_ADDRESS_HERE' && contractAddress !== 'mock') {
-        this.contract = new ethers.Contract(contractAddress, contractABI, this.wallet);
+      if (contractAddress && contractAddress !== 'mock') {
+        this.contract = new ethers.Contract(contractAddress, this.getContractABI(), this.wallet);
         logger.info(`✓ Contract loaded at: ${contractAddress}`);
       } else {
-        logger.warn('No contract address configured, contract interactions will not work');
+        logger.warn('No contract address configured');
       }
 
       this.isConnected = true;
@@ -63,29 +69,50 @@ class BlockchainService {
     }
   }
 
+  /**
+   * Updated ABI for single-modality FederatedModelRegistry contract
+   * Matches deployed contract: 0x1BE44922c9505E492eA93cfA4a673CE8ea106Ea1
+   */
   getContractABI() {
-    // Simplified ABI for the FederatedModelRegistry contract
     return [
-      "function registerHospital(string memory name, string memory region, address hospitalAddress) external",
-      "function submitModelWeights(string memory fusionCID, string memory xrayCID, string memory histoCID, string memory ultraCID, bytes32 modelHash, string memory performanceMetrics) external",
-      "function getHospitalInfo(uint256 hospitalId) external view returns (string memory, string memory, address, bool, uint256)",
-      "function getLatestModel() external view returns (uint256, string memory, string memory, string memory, string memory, bytes32)",
-      "function getModelLineage(uint256 modelId) external view returns (uint256[] memory)",
-      "event HospitalRegistered(uint256 indexed hospitalId, string name, address hospitalAddress)",
-      "event ModelSubmitted(uint256 indexed modelId, uint256 indexed hospitalId, string fusionCID, bytes32 modelHash)"
+      // Hospital Registration
+      "function registerParticipant(address _hospital, string memory _name, string memory _region) external",
+      "function updateHospitalInfo(address _hospital, string memory _name, string memory _region) external",
+      "function setHospitalStatus(address _hospital, bool _isActive) external",
+      
+      // Model Updates (single modality)
+      "function submitUpdate(string memory _modelCID, bytes32 _modelHash, uint256 _sampleCount, uint256 _localAccuracy, uint256 _localAUC, uint256 _localSensitivity, uint256 _localSpecificity, uint256 _trainingDuration) external",
+      "function initializeGenesisModel(string memory _modelCID, bytes32 _modelHash) external",
+      
+      // Oracle Functions
+      "function setOracleAddress(address _oracle) external",
+      "function publishNewGlobalModel(string memory _modelCID, bytes32 _modelHash, uint256 _accuracy, uint256 _aucScore, uint256 _sensitivity, uint256 _specificity) external",
+      
+      // Query Functions
+      "function getLatestGlobalModel() external view returns (tuple(uint256 version, string modelWeightsCID, bytes32 modelHash, uint256 timestamp, uint256 totalSamples, uint256 accuracy, uint256 aucScore, uint256 sensitivity, uint256 specificity, uint256 contributorCount, uint256 parentVersion))",
+      "function getHospitalInfo(address _hospital) external view returns (tuple(string name, string region, uint256 registrationTime, uint256 totalContributions, uint256 totalSamplesContributed, bool isActive))",
+      "function isParticipant(address _addr) external view returns (bool)",
+      "function getParticipants() external view returns (address[])",
+      "function currentRound() external view returns (uint256)",
+      "function getModelCount() external view returns (uint256)",
+      "function getCurrentRoundSubmissions() external view returns (uint256)",
+      "function getNetworkStatistics() external view returns (uint256 totalHospitals, uint256 activeHospitals, uint256 totalContributions, uint256 totalSamples, uint256 currentRoundNumber, uint256 modelsPublished)",
+      
+      // Events
+      "event ParticipantRegistered(address indexed hospital, string name, string region)",
+      "event UpdateSubmitted(address indexed contributor, uint256 indexed round, uint256 sampleCount, uint256 accuracy, uint256 auc)",
+      "event NewGlobalModel(uint256 indexed version, string modelCID, uint256 accuracy, uint256 aucScore, uint256 contributorCount)"
     ];
   }
 
   async mockTransaction(method, params) {
-    // Mock transaction for development
-    const txHash = `0x${Math.random().toString(16).substr(2, 64)}`;
-    
+    const txHash = `0x${Array(64).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join('')}`;
     logger.info(`Mock blockchain transaction: ${method}(${JSON.stringify(params)})`);
     
     return {
       hash: txHash,
-      blockNumber: Math.floor(Math.random() * 1000000),
-      gasUsed: ethers.BigNumber.from(Math.floor(Math.random() * 100000)),
+      blockNumber: Math.floor(Math.random() * 1000000) + 9800000,
+      gasUsed: BigInt(Math.floor(Math.random() * 100000)),
       status: 1,
       mock: true
     };
@@ -94,35 +121,44 @@ class BlockchainService {
 
 const blockchainService = new BlockchainService();
 
-// Register hospital on blockchain
+/**
+ * @swagger
+ * /api/blockchain/register-hospital:
+ *   post:
+ *     summary: Register hospital on blockchain
+ */
 router.post('/register-hospital', async (req, res) => {
   try {
     await blockchainService.connect();
 
     const {
       hospital_name = process.env.HOSPITAL_NAME,
-      hospital_region = process.env.HOSPITAL_REGION
+      hospital_region = process.env.HOSPITAL_REGION,
+      hospital_address = blockchainService.wallet?.address
     } = req.body;
+
+    if (!hospital_name || !hospital_region) {
+      return res.status(400).json({
+        error: 'Hospital name and region are required'
+      });
+    }
 
     logger.info('Registering hospital on blockchain...');
 
     let result;
 
     if (blockchainService.contract) {
-      // Real blockchain transaction
-      const tx = await blockchainService.contract.registerHospital(
+      const tx = await blockchainService.contract.registerParticipant(
+        hospital_address,
         hospital_name,
-        hospital_region,
-        blockchainService.wallet.address
+        hospital_region
       );
-      
       result = await tx.wait();
     } else {
-      // Mock transaction
-      result = await blockchainService.mockTransaction('registerHospital', {
+      result = await blockchainService.mockTransaction('registerParticipant', {
+        hospital_address,
         hospital_name,
-        hospital_region,
-        address: blockchainService.wallet.address
+        hospital_region
       });
     }
 
@@ -130,13 +166,12 @@ router.post('/register-hospital', async (req, res) => {
       success: true,
       transaction_hash: result.hash,
       block_number: result.blockNumber,
-      gas_used: result.gasUsed?.toString() || '50000',
       hospital_registered: {
         name: hospital_name,
         region: hospital_region,
-        address: blockchainService.wallet.address
+        address: hospital_address
       },
-      registration_timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString()
     });
 
   } catch (error) {
@@ -148,51 +183,58 @@ router.post('/register-hospital', async (req, res) => {
   }
 });
 
-// Submit model weights to blockchain
+/**
+ * @swagger
+ * /api/blockchain/submit-model:
+ *   post:
+ *     summary: Submit model update to blockchain (single histopathology model)
+ */
 router.post('/submit-model', async (req, res) => {
   try {
     await blockchainService.connect();
 
     const {
-      fusion_cid,
-      xray_cid,
-      histopathology_cid,
-      ultrasound_cid,
+      model_weights_cid,
       model_hash,
-      performance_metrics
+      local_samples,
+      accuracy,        // Scaled by 100 (e.g., 94.5% = 9450)
+      auc_score,       // Scaled by 10000 (e.g., 0.95 = 9500)
+      sensitivity,     // Scaled by 100
+      specificity,     // Scaled by 100
+      training_time    // In seconds
     } = req.body;
 
-    if (!fusion_cid || !model_hash) {
+    if (!model_weights_cid || !model_hash || !local_samples) {
       return res.status(400).json({
-        error: 'Fusion CID and model hash are required'
+        error: 'model_weights_cid, model_hash, and local_samples are required'
       });
     }
 
-    logger.info('Submitting model weights to blockchain...');
+    logger.info('Submitting histopathology model update to blockchain...');
+    logger.info(`Model CID: ${model_weights_cid}`);
+    logger.info(`Samples: ${local_samples}, Accuracy: ${accuracy / 100}%`);
 
     let result;
 
     if (blockchainService.contract) {
-      // Real blockchain transaction
-      const tx = await blockchainService.contract.submitModelWeights(
-        fusion_cid,
-        xray_cid || '',
-        histopathology_cid || '',
-        ultrasound_cid || '',
+      const tx = await blockchainService.contract.submitUpdate(
+        model_weights_cid,
         model_hash,
-        performance_metrics || ''
+        local_samples,
+        accuracy || 0,
+        auc_score || 0,
+        sensitivity || 0,
+        specificity || 0,
+        training_time || 0
       );
-      
       result = await tx.wait();
     } else {
-      // Mock transaction
-      result = await blockchainService.mockTransaction('submitModelWeights', {
-        fusion_cid,
-        xray_cid,
-        histopathology_cid,
-        ultrasound_cid,
+      result = await blockchainService.mockTransaction('submitUpdate', {
+        model_weights_cid,
         model_hash,
-        performance_metrics
+        local_samples,
+        accuracy,
+        auc_score
       });
     }
 
@@ -200,18 +242,15 @@ router.post('/submit-model', async (req, res) => {
       success: true,
       transaction_hash: result.hash,
       block_number: result.blockNumber,
-      gas_used: result.gasUsed?.toString() || '80000',
       model_submission: {
-        fusion_cid,
-        extractor_cids: {
-          xray: xray_cid,
-          histopathology: histopathology_cid,
-          ultrasound: ultrasound_cid
-        },
+        model_weights_cid,
         model_hash,
-        performance_metrics
+        local_samples,
+        accuracy: accuracy / 100,
+        auc_score: auc_score / 10000,
+        model_type: 'EfficientNet-B0 + CoordinateAttention'
       },
-      submission_timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString()
     });
 
   } catch (error) {
@@ -223,40 +262,58 @@ router.post('/submit-model', async (req, res) => {
   }
 });
 
-// Get latest model from blockchain
+/**
+ * @swagger
+ * /api/blockchain/latest-model:
+ *   get:
+ *     summary: Get latest global histopathology model
+ */
 router.get('/latest-model', async (req, res) => {
   try {
     await blockchainService.connect();
 
-    logger.info('Fetching latest model from blockchain...');
+    logger.info('Fetching latest global histopathology model...');
 
     let modelData;
 
     if (blockchainService.contract) {
-      // Real blockchain query
-      const result = await blockchainService.contract.getLatestModel();
-      modelData = {
-        model_id: result[0].toString(),
-        fusion_cid: result[1],
-        xray_cid: result[2],
-        histopathology_cid: result[3],
-        ultrasound_cid: result[4],
-        model_hash: result[5]
-      };
+      try {
+        const result = await blockchainService.contract.getLatestGlobalModel();
+        modelData = {
+          model_weights_cid: result.modelWeightsCID,
+          model_hash: result.modelHash,
+          version: result.version.toString(),
+          timestamp: new Date(Number(result.timestamp) * 1000).toISOString(),
+          total_samples: result.totalSamples.toString(),
+          accuracy: Number(result.accuracy) / 100,
+          auc_score: Number(result.aucScore) / 10000,
+          sensitivity: Number(result.sensitivity) / 10000,
+          specificity: Number(result.specificity) / 10000,
+          contributor_count: result.contributorCount.toString(),
+          parent_version: result.parentVersion.toString()
+        };
+      } catch (e) {
+        // No models published yet
+        modelData = null;
+      }
     } else {
-      // Mock data
       modelData = {
-        model_id: '1',
-        fusion_cid: 'QmMockFusion123...',
-        xray_cid: 'QmMockXray123...',
-        histopathology_cid: 'QmMockHisto123...',
-        ultrasound_cid: 'QmMockUltra123...',
-        model_hash: '0x' + Math.random().toString(16).substr(2, 64)
+        model_weights_cid: 'QmMockHistoModel...',
+        model_hash: '0x' + Array(64).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
+        version: '0',
+        timestamp: new Date().toISOString(),
+        total_samples: '0',
+        accuracy: 0,
+        auc_score: 0,
+        contributor_count: '0',
+        mock: true
       };
     }
 
     res.json({
       success: true,
+      model_type: 'EfficientNet-B0 + CoordinateAttention',
+      task: 'Histopathology Binary Classification',
       latest_model: modelData,
       query_timestamp: new Date().toISOString()
     });
@@ -270,41 +327,53 @@ router.get('/latest-model', async (req, res) => {
   }
 });
 
-// Get hospital information from blockchain
-router.get('/hospital-info/:hospitalId', async (req, res) => {
+/**
+ * @swagger
+ * /api/blockchain/hospital-info:
+ *   get:
+ *     summary: Get hospital information
+ */
+router.get('/hospital-info', async (req, res) => {
   try {
     await blockchainService.connect();
 
-    const { hospitalId } = req.params;
+    const hospitalAddress = req.query.address || blockchainService.wallet?.address;
 
-    logger.info(`Fetching hospital info from blockchain: ${hospitalId}`);
+    logger.info(`Fetching hospital info: ${hospitalAddress}`);
 
     let hospitalInfo;
 
-    if (blockchainService.contract) {
-      // Real blockchain query
-      const result = await blockchainService.contract.getHospitalInfo(hospitalId);
-      hospitalInfo = {
-        name: result[0],
-        region: result[1],
-        address: result[2],
-        active: result[3],
-        models_submitted: result[4].toString()
-      };
+    if (blockchainService.contract && hospitalAddress) {
+      try {
+        const result = await blockchainService.contract.getHospitalInfo(hospitalAddress);
+        hospitalInfo = {
+          name: result.name,
+          region: result.region,
+          address: hospitalAddress,
+          is_active: result.isActive,
+          registration_time: result.registrationTime > 0
+            ? new Date(Number(result.registrationTime) * 1000).toISOString()
+            : null,
+          total_contributions: result.totalContributions.toString(),
+          total_samples: result.totalSamplesContributed.toString()
+        };
+      } catch (e) {
+        hospitalInfo = null;
+      }
     } else {
-      // Mock data
       hospitalInfo = {
-        name: 'Mock Hospital',
-        region: 'Mock Region',
-        address: blockchainService.wallet.address,
-        active: true,
-        models_submitted: '3'
+        name: process.env.HOSPITAL_NAME || 'Mock Hospital',
+        region: process.env.HOSPITAL_REGION || 'Mock Region',
+        address: hospitalAddress,
+        is_active: true,
+        total_contributions: '0',
+        total_samples: '0',
+        mock: true
       };
     }
 
     res.json({
       success: true,
-      hospital_id: hospitalId,
       hospital_info: hospitalInfo,
       query_timestamp: new Date().toISOString()
     });
@@ -318,46 +387,70 @@ router.get('/hospital-info/:hospitalId', async (req, res) => {
   }
 });
 
-// Get blockchain network status
+/**
+ * @swagger
+ * /api/blockchain/network-status:
+ *   get:
+ *     summary: Get blockchain network status
+ */
 router.get('/network-status', async (req, res) => {
   try {
     await blockchainService.connect();
 
     let networkInfo = {};
+    let contractInfo = {};
 
     if (blockchainService.provider) {
       try {
         const network = await blockchainService.provider.getNetwork();
         const blockNumber = await blockchainService.provider.getBlockNumber();
-        const gasPrice = await blockchainService.provider.getGasPrice();
+        const feeData = await blockchainService.provider.getFeeData();
 
         networkInfo = {
           network_name: network.name,
-          chain_id: network.chainId,
+          chain_id: network.chainId.toString(),
           current_block: blockNumber,
-          gas_price: gasPrice.toString(),
+          gas_price: feeData.gasPrice?.toString() || '0',
           connected: true
         };
       } catch (error) {
         networkInfo = {
           connected: false,
-          error: error.message,
-          mock_mode: true
+          error: error.message
         };
       }
     } else {
       networkInfo = {
         connected: false,
-        mock_mode: true,
-        message: 'Using mock blockchain service'
+        mock_mode: true
       };
+    }
+
+    if (blockchainService.contract) {
+      try {
+        const stats = await blockchainService.contract.getNetworkStatistics();
+        contractInfo = {
+          total_hospitals: stats.totalHospitals.toString(),
+          active_hospitals: stats.activeHospitals.toString(),
+          total_contributions: stats.totalContributions.toString(),
+          total_samples: stats.totalSamples.toString(),
+          current_round: stats.currentRoundNumber.toString(),
+          models_published: stats.modelsPublished.toString()
+        };
+      } catch (e) {
+        contractInfo = { error: 'Failed to fetch contract stats' };
+      }
     }
 
     res.json({
       success: true,
-      network_status: networkInfo,
-      wallet_address: blockchainService.wallet.address,
-      contract_address: process.env.CONTRACT_ADDRESS || 'mock_contract',
+      network: networkInfo,
+      contract: {
+        address: process.env.CONTRACT_ADDRESS || 'mock',
+        ...contractInfo
+      },
+      wallet_address: blockchainService.wallet?.address || 'not configured',
+      model_type: 'EfficientNet-B0 + CoordinateAttention (Histopathology)',
       query_timestamp: new Date().toISOString()
     });
 
@@ -370,64 +463,54 @@ router.get('/network-status', async (req, res) => {
   }
 });
 
-// Estimate gas for operations
-router.post('/estimate-gas', async (req, res) => {
+/**
+ * @swagger
+ * /api/blockchain/initialize-genesis:
+ *   post:
+ *     summary: Initialize genesis model (owner only)
+ */
+router.post('/initialize-genesis', async (req, res) => {
   try {
     await blockchainService.connect();
 
-    const { operation, parameters = {} } = req.body;
+    const { model_cid, model_hash } = req.body;
 
-    let gasEstimate;
+    if (!model_cid || !model_hash) {
+      return res.status(400).json({
+        error: 'model_cid and model_hash are required'
+      });
+    }
+
+    logger.info('Initializing genesis histopathology model...');
+
+    let result;
 
     if (blockchainService.contract) {
-      // Real gas estimation
-      try {
-        switch (operation) {
-          case 'registerHospital':
-            gasEstimate = await blockchainService.contract.estimateGas.registerHospital(
-              parameters.name || 'Hospital',
-              parameters.region || 'Region',
-              parameters.address || blockchainService.wallet.address
-            );
-            break;
-          case 'submitModelWeights':
-            gasEstimate = await blockchainService.contract.estimateGas.submitModelWeights(
-              parameters.fusion_cid || 'QmTest',
-              parameters.xray_cid || '',
-              parameters.histopathology_cid || '',
-              parameters.ultrasound_cid || '',
-              parameters.model_hash || '0x0000',
-              parameters.performance_metrics || ''
-            );
-            break;
-          default:
-            gasEstimate = ethers.BigNumber.from('50000'); // Default estimate
-        }
-      } catch (error) {
-        gasEstimate = ethers.BigNumber.from('100000'); // Fallback estimate
-      }
+      const tx = await blockchainService.contract.initializeGenesisModel(model_cid, model_hash);
+      result = await tx.wait();
     } else {
-      // Mock gas estimates
-      const mockEstimates = {
-        registerHospital: '45000',
-        submitModelWeights: '85000'
-      };
-      gasEstimate = ethers.BigNumber.from(mockEstimates[operation] || '50000');
+      result = await blockchainService.mockTransaction('initializeGenesisModel', {
+        model_cid,
+        model_hash
+      });
     }
 
     res.json({
       success: true,
-      operation: operation,
-      gas_estimate: gasEstimate.toString(),
-      estimated_cost_eth: ethers.utils.formatEther(gasEstimate.mul('20000000000')), // 20 Gwei
-      parameters: parameters,
-      estimation_timestamp: new Date().toISOString()
+      transaction_hash: result.hash,
+      block_number: result.blockNumber,
+      genesis_model: {
+        model_cid,
+        model_hash,
+        model_type: 'EfficientNet-B0 + CoordinateAttention'
+      },
+      timestamp: new Date().toISOString()
     });
 
   } catch (error) {
-    logger.error('Error estimating gas:', error);
+    logger.error('Error initializing genesis model:', error);
     res.status(500).json({
-      error: 'Gas estimation failed',
+      error: 'Genesis model initialization failed',
       message: error.message
     });
   }

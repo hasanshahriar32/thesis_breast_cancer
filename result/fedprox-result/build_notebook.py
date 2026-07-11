@@ -15,12 +15,22 @@ def img_b64(path):
 def md(src):
     return {"cell_type":"markdown","metadata":{},"source":src if isinstance(src,list) else [src]}
 
-def code(src, outputs=None):
+def code(src_lines, outputs=None):
+    """Create a runnable code cell. src_lines is a list of lines WITHOUT newlines."""
+    # Re-add newlines to each line except the last
+    lines_with_nl = []
+    for i, line in enumerate(src_lines):
+        lines_with_nl.append(line + ("\n" if i < len(src_lines) - 1 else ""))
     return {
         "cell_type":"code","execution_count":None,"metadata":{},
         "outputs": outputs or [],
-        "source": src if isinstance(src,list) else [src]
+        "source": lines_with_nl
     }
+
+def code_display(src_str, lang="python"):
+    """Display source code as a markdown fenced block (not runnable)."""
+    lines = [f"```{lang}\n"] + [l + "\n" for l in src_str.split("\n")] + ["```\n"]
+    return md(lines)
 
 def img_cell(path, caption=""):
     b = img_b64(path)
@@ -180,14 +190,69 @@ cells.append(md([
 # ── 5. CODE ──
 cells.append(md(["<a id='code'></a>\n", "## 5. FL Simulation Code\n"]))
 cells.append(md(["### 5.1 Experiment Script (`fedprox_experiment.py`)\n"]))
-cells.append(code(exp_src.split('\n')))
+cells.append(code_display(exp_src))
 cells.append(md(["### 5.2 Plot Generator (`generate_plots.py`)\n"]))
-cells.append(code(plot_src.split('\n')))
+cells.append(code_display(plot_src))
 
 # ── 6. RESULTS ──
 cells.append(md(["<a id='results'></a>\n", "## 6. Results & Analysis\n"]))
 
-# Build results table markdown
+# Runnable setup cell
+cells.append({
+    "cell_type":"code","execution_count":None,"metadata":{},"outputs":[],
+    "source":[
+        "import json, os, sys\n",
+        "import pandas as pd\n",
+        "import matplotlib.pyplot as plt\n",
+        "import numpy as np\n",
+        "\n",
+        "# Load experiment results - works from any working directory\n",
+        "_nb_dir = os.path.dirname(os.path.abspath('FedProx_Research_Complete.ipynb'))\n",
+        "_data_path = os.path.join(_nb_dir, 'data', 'experiment_results.json')\n",
+        "with open(_data_path) as f:\n",
+        "    results = json.load(f)\n",
+        "print(f'Loaded results for: {list(results.keys())}')\n",
+    ]
+})
+
+# Runnable summary table cell
+cells.append({
+    "cell_type":"code","execution_count":None,"metadata":{},"outputs":[],
+    "source":[
+        "### 6.1 Final Performance Summary\n",
+        "rows = []\n",
+        "for k, v in results.items():\n",
+        "    fm = v['final_metrics']\n",
+        "    rows.append({'Method': v['algorithm'],\n",
+        "                 'Accuracy (%)': round(fm['accuracy'], 2),\n",
+        "                 'AUC-ROC': round(fm['auc_roc'], 4),\n",
+        "                 'Sensitivity': round(fm['sensitivity'], 4),\n",
+        "                 'Specificity': round(fm['specificity'], 4),\n",
+        "                 'F1-Score': round(fm['f1_score'], 4),\n",
+        "                 'Precision': round(fm['precision'], 4)})\n",
+        "df = pd.DataFrame(rows).set_index('Method')\n",
+        "display(df.style.highlight_max(axis=0, color='#d4edda').format(precision=4))\n",
+    ]
+})
+
+# Runnable convergence plot cell
+cells.append({
+    "cell_type":"code","execution_count":None,"metadata":{},"outputs":[],
+    "source":[
+        "fig, axes = plt.subplots(1, 2, figsize=(14, 5))\n",
+        "colors = ['#e74c3c','#3498db','#2ecc71','#9b59b6','#e67e22','#1abc9c']\n",
+        "for ax, metric, label in zip(axes, ['global_accuracy','global_auc'], ['Accuracy (%)','AUC-ROC']):\n",
+        "    for (k, v), color in zip(results.items(), colors):\n",
+        "        vals = [r[metric] for r in v['rounds']]\n",
+        "        ls = '--' if k == 'FedAvg' else '-'\n",
+        "        ax.plot(range(1, len(vals)+1), vals, ls=ls, color=color, marker='o', ms=4, label=v['algorithm'])\n",
+        "    ax.set_xlabel('Communication Round'); ax.set_ylabel(label)\n",
+        "    ax.set_title(f'FedProx vs FedAvg: {label} Convergence'); ax.legend(fontsize=8); ax.grid(alpha=0.3)\n",
+        "plt.tight_layout(); plt.show()\n",
+    ]
+})
+
+# Static markdown tables
 rows = ["| Method | Accuracy (%) | AUC-ROC | Sensitivity | Specificity | F1-Score | Precision |\n",
         "|--------|-------------|---------|-------------|-------------|----------|-----------|\n"]
 for k, v in results.items():

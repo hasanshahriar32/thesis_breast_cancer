@@ -2,50 +2,62 @@
 
 ## Overview
 
-This document outlines the specific use cases and requirements for the blockchain-based federated learning system for breast cancer diagnosis. The system is designed to leverage **multiple hospitals** and **diverse patient populations** to create a superior global model while preserving patient privacy.
+This document outlines the specific use cases and requirements for the blockchain-based federated learning system for **histopathology-based breast cancer classification**. The system uses **EfficientNet-B0 with Coordinate Attention** to collaboratively train across multiple hospitals while preserving patient privacy.
+
+---
+
+## Model Architecture
+
+- **Backbone**: EfficientNet-B0 (pretrained on ImageNet)
+- **Attention**: Coordinate Attention mechanism
+- **Task**: Binary Classification (Benign vs Malignant)
+- **Framework**: PyTorch 2.0+
+- **Input Size**: 160×160 RGB histopathology images
+- **Parameters**: ~5.9 million
 
 ---
 
 ## Use Case 1: Multi-Hospital Collaborative Training
 
 ### Scenario
-Multiple hospitals want to collaboratively train a breast cancer detection model without sharing sensitive patient data.
+Multiple hospitals want to collaboratively train a histopathology breast cancer classification model without sharing sensitive patient data.
 
 ### Requirements
 - **Minimum 3 hospitals** (recommended 5+ for optimal results)
 - Each hospital must have:
-  - At least 500 patient records with multi-modal images (X-Ray, Histopathology, Ultrasound)
-  - Confirmed diagnoses (malignant/benign)
-  - Local computing resources for model training
+  - At least 500 histopathology images with confirmed diagnoses
+  - Binary labels: Benign (0) or Malignant (1)
+  - Local computing resources for model training (GPU recommended)
   - MetaMask wallet for blockchain identity
 
 ### Benefits
-1. **Larger Effective Dataset**: 3 hospitals × 500 samples = 1,500 total samples (vs 500 per hospital)
-2. **Privacy Preserved**: No hospital shares raw patient data
+1. **Larger Effective Dataset**: 3 hospitals × 500 samples = 1,500 total samples
+2. **Privacy Preserved**: No hospital shares raw histopathology images
 3. **Improved Accuracy**: Aggregated model performs better than any single hospital's model
 4. **Compliance**: Meets HIPAA, GDPR, and other privacy regulations
 
 ### Example
 ```
-Hospital A (Urban, 1,500 samples) → 91% accuracy on own data, 78% on others
-Hospital B (Rural, 600 samples)   → 87% accuracy on own data, 80% on others  
-Hospital C (Research, 2,000 samples) → 93% accuracy on own data, 85% on others
+Hospital A (Urban, 1,500 samples) → 93.78% accuracy, 0.9650 AUC
+Hospital B (Rural, 800 samples)   → 91.00% accuracy, 0.9400 AUC
+Hospital C (Research, 2,000 samples) → 95.00% accuracy, 0.9750 AUC
 
-After Federated Aggregation:
-Global Model (4,100 samples) → 93% accuracy across ALL populations
+After Federated Aggregation (FedAvg):
+Global Model (4,300 samples) → 93.50% accuracy, 0.9600 AUC across ALL populations
 ```
 
 ---
 
-## Use Case 2: Diverse Population Coverage
+## Use Case 2: Diverse Histopathology Data Coverage
 
 ### Why Diversity Matters
 
-Breast cancer presentations and imaging characteristics vary significantly across:
+Histopathology images vary significantly across:
+- **Magnification levels**: 40X, 100X, 200X, 400X
+- **Staining protocols**: H&E, IHC, different laboratories
+- **Scanner types**: Different digital pathology equipment
+- **Tumor subtypes**: Ductal carcinoma, lobular carcinoma, etc.
 - **Demographics**: Age, ethnicity, genetic factors
-- **Geographic regions**: Urban vs rural, different healthcare systems
-- **Socioeconomic factors**: Access to screening, disease stage at diagnosis
-- **Equipment variations**: Different imaging machines, protocols, quality
 
 ### Requirements for Diversity
 
@@ -54,13 +66,14 @@ Breast cancer presentations and imaging characteristics vary significantly acros
    - Rural community hospitals
    - Specialized cancer centers
 
-2. **Demographic Diversity** (Minimum coverage)
-   - Age ranges: 30-40, 40-50, 50-60, 60-70, 70+
-   - Multiple ethnicities represented
-   - Various socioeconomic backgrounds
+2. **Dataset Diversity** (Recommended sources)
+   - BreaKHis dataset
+   - Breast Cancer Histopathology Images
+   - Histopathological MSI dataset
+   - Custom institutional data
 
 3. **Clinical Diversity**
-   - Different disease stages (early detection to advanced)
+   - Different disease stages
    - Various tumor types and subtypes
    - Both screening and diagnostic cases
 
@@ -68,350 +81,157 @@ Breast cancer presentations and imaging characteristics vary significantly acros
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ Hospital A: Urban Teaching Hospital (New York)             │
+│ Hospital A: Boston Medical Center (North America)          │
 ├─────────────────────────────────────────────────────────────┤
-│ • 1,500 samples                                             │
-│ • Demographics: Mixed ethnicity, ages 35-65                 │
-│ • Specialty: Advanced diagnostics, research cases           │
-│ • Equipment: Latest high-resolution imaging                 │
-│ • Population bias: More diverse, younger                    │
+│ • 1,500 histopathology samples                              │
+│ • Dataset: BreaKHis (multiple magnifications)               │
+│ • Accuracy: 93.78%, AUC: 0.9650                            │
+│ • Sensitivity: 94%, Specificity: 93%                       │
+│ • Training Time: 1 hour                                     │
 └─────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────┐
-│ Hospital B: Rural Community Hospital (Montana)             │
+│ Hospital B: London Healthcare Trust (Europe)               │
 ├─────────────────────────────────────────────────────────────┤
-│ • 600 samples                                               │
-│ • Demographics: Primarily Caucasian, ages 55-75             │
-│ • Specialty: General screening, preventive care             │
-│ • Equipment: Standard imaging equipment                     │
-│ • Population bias: Older, less diverse, later detection    │
+│ • 800 histopathology samples                                │
+│ • Dataset: Breast Cancer Histopathology                     │
+│ • Accuracy: 91.00%, AUC: 0.9400                            │
+│ • Sensitivity: 92%, Specificity: 90%                       │
+│ • Training Time: 40 minutes                                 │
 └─────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────┐
-│ Hospital C: Cancer Research Center (Boston)                │
+│ Hospital C: Tokyo Cancer Institute (Asia)                  │
 ├─────────────────────────────────────────────────────────────┤
-│ • 2,000 samples                                             │
-│ • Demographics: Research volunteers, well-documented        │
-│ • Specialty: Clinical trials, experimental treatments       │
-│ • Equipment: Research-grade, multiple modalities            │
-│ • Population bias: Referred complex cases                   │
+│ • 2,000 histopathology samples                              │
+│ • Dataset: Histopathological MSI                            │
+│ • Accuracy: 95.00%, AUC: 0.9750                            │
+│ • Sensitivity: 96%, Specificity: 94%                       │
+│ • Training Time: 1.5 hours                                  │
 └─────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────┐
-│ Hospital D: Community Hospital (Los Angeles)               │
-├─────────────────────────────────────────────────────────────┤
-│ • 800 samples                                               │
-│ • Demographics: Hispanic/Latino majority, ages 40-60        │
-│ • Specialty: Community health, bilingual care               │
-│ • Equipment: Standard clinical imaging                      │
-│ • Population bias: Specific ethnic group, language needs    │
-└─────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────┐
-│ Hospital E: University Hospital (Houston)                  │
-├─────────────────────────────────────────────────────────────┤
-│ • 1,200 samples                                             │
-│ • Demographics: African American majority, ages 45-70       │
-│ • Specialty: Specialized oncology, genetic counseling       │
-│ • Equipment: Advanced multi-modal imaging                   │
-│ • Population bias: Specific ethnic group, genetic factors   │
-└─────────────────────────────────────────────────────────────┘
-
-AGGREGATED GLOBAL MODEL:
-✅ Total: 6,100 samples from 5 diverse populations
-✅ Better generalization across ALL demographics
-✅ Reduces bias present in any single hospital
 ```
 
 ---
 
-## Use Case 3: Addressing the "Single Hospital Limitation"
+## Use Case 3: Metrics Tracking for Clinical Validation
 
-### Problem Statement
+### Tracked Metrics
 
-**Single hospital models fail to generalize** because:
+| Metric | Description | Clinical Importance |
+|--------|-------------|---------------------|
+| **Accuracy** | Overall correct predictions | General performance |
+| **AUC-ROC** | Area under ROC curve | Model discrimination ability |
+| **Sensitivity** | True positive rate for malignant | Critical for cancer detection |
+| **Specificity** | True negative rate for benign | Reduces false alarms |
+| **F1-Score** | Harmonic mean of precision/recall | Balance metric |
 
-1. **Limited Sample Size**
-   - Small dataset → overfitting
-   - High variance in predictions
-   - Large confidence intervals
+### Clinical Significance
 
-2. **Population Bias**
-   - Model learns specific to local population
-   - Fails on different demographics
-   - Cannot handle regional variations
-
-3. **Equipment Bias**
-   - Trained on specific imaging protocols
-   - Poor performance with different equipment
-   - Limited to institutional standards
-
-### Solution: Federated Learning with Diversity
-
-**Requirement**: Minimum 3 hospitals from different regions/demographics
-
-**Why 3+ Hospitals?**
-
-```python
-# Statistical reasoning
-import numpy as np
-
-# Single hospital
-n_single = 500
-ci_single = 1.96 * np.sqrt(0.91 * 0.09 / n_single)
-print(f"Single Hospital: 91% ± {ci_single*100:.2f}%")
-# Output: 91% ± 2.50% (HIGH UNCERTAINTY)
-
-# 3 Hospitals
-n_three = 1500
-ci_three = 1.96 * np.sqrt(0.92 * 0.08 / n_three)
-print(f"3 Hospitals: 92% ± {ci_three*100:.2f}%")
-# Output: 92% ± 1.37% (MEDIUM UNCERTAINTY)
-
-# 5 Hospitals
-n_five = 3000
-ci_five = 1.96 * np.sqrt(0.93 * 0.07 / n_five)
-print(f"5 Hospitals: 93% ± {ci_five*100:.2f}%")
-# Output: 93% ± 0.91% (LOW UNCERTAINTY)
-```
-
-**Benefits of 3+ Hospitals:**
-- ✅ 3x larger effective dataset
-- ✅ Diversity reduces overfitting
-- ✅ Ensemble effect improves accuracy
-- ✅ Smaller confidence intervals
-- ✅ Better generalization to new populations
+- **High Sensitivity (>90%)**: Minimizes missed cancers
+- **High Specificity (>90%)**: Reduces unnecessary biopsies
+- **High AUC (>0.95)**: Excellent diagnostic accuracy
 
 ---
 
-## Use Case 4: Privacy-Preserving Collaboration
+## Use Case 4: Privacy-Preserving Model Updates
 
-### Scenario
-Hospitals want to collaborate but face legal/regulatory barriers:
+### What Gets Shared
 
-**Barriers:**
-- HIPAA (USA): Prohibits sharing patient data without consent
-- GDPR (EU): Strict data protection regulations
-- Institutional policies: Data ownership concerns
-- Competitive concerns: Hospitals don't want to share with competitors
+✅ **Shared on Blockchain**:
+- IPFS CID (pointer to encrypted model weights)
+- SHA-256 hash of model
+- Training metrics (accuracy, AUC, sensitivity, specificity)
+- Sample count (no patient identifiers)
+- Training duration
 
-### Solution
-Blockchain-based federated learning allows collaboration **without sharing data**:
+❌ **Never Shared**:
+- Raw histopathology images
+- Patient identifiers
+- Hospital internal data
+- Feature vectors
 
-**What Gets Shared:**
-1. ✅ Model weights (mathematical parameters only)
-2. ✅ Aggregate statistics (total counts, no individuals)
-3. ✅ IPFS CIDs (pointers to encrypted models)
-4. ✅ Wallet addresses (hospital identity)
+### Workflow
 
-**What NEVER Gets Shared:**
-1. ❌ Raw patient images
-2. ❌ Patient names, IDs, demographics
-3. ❌ Individual diagnoses
-4. ❌ Feature vectors (could be linkable)
-5. ❌ Hospital-specific protocols
-
-### Requirements
-- Each hospital trains **locally** on private data
-- Only **encrypted model weights** uploaded to IPFS
-- **Blockchain** coordinates aggregation transparently
-- **Smart contract** ensures fair participation
+1. Hospital trains EfficientNet-B0 locally on private histopathology data
+2. Model weights are encrypted and uploaded to IPFS
+3. IPFS CID and metrics are submitted to blockchain
+4. Oracle aggregates models using FedAvg
+5. New global model is published
+6. Hospitals download and continue training
 
 ---
 
-## Use Case 5: Continuous Model Improvement
+## Use Case 5: Federated Averaging (FedAvg)
 
-### Scenario
-Initial global model deployed, but needs continuous improvement as:
-- New patients arrive
-- New demographics emerge
-- Equipment upgrades occur
-- Medical knowledge advances
+### Aggregation Process
 
-### Requirements for Continuous Learning
-
-**Round 1: Initial Training**
 ```
-Hospital A, B, C → Submit updates → Global Model v1.0 (93% accuracy)
+Global Model = Σ (n_k / n_total) × Model_k
+
+Where:
+- n_k = samples from hospital k
+- n_total = total samples across all hospitals
+- Model_k = hospital k's model weights
 ```
 
-**Round 2: Refinement (3 months later)**
+### Example Calculation
+
 ```
-New data from A, B, C (500 new patients each)
-+ Hospital D joins (800 samples)
-→ Global Model v2.0 (94% accuracy)
-```
+Hospital A: 1,500 samples, 93.78% accuracy
+Hospital B: 800 samples, 91.00% accuracy
+Hospital C: 2,000 samples, 95.00% accuracy
 
-**Round 3: Expansion (6 months later)**
-```
-All previous hospitals + Hospital E (1,200 samples)
-+ Updated extractors with new architecture
-→ Global Model v3.0 (95% accuracy)
-```
+Weighted Aggregation:
+Total = 4,300 samples
 
-### Key Requirements
-1. **Minimum 3 hospitals** per training round
-2. **New data** (not re-training on same patients)
-3. **Blockchain tracking** of all versions
-4. **IPFS storage** of historical models
-5. **Transparent** participation records
-
----
-
-## Use Case 6: Research Validation Across Populations
-
-### Scenario
-Research institutions want to validate their model's generalization ability across diverse populations before deployment.
-
-### Requirements
-
-**Phase 1: Development (Single Institution)**
-- Develop model on local research cohort
-- Accuracy: 95% (but only on research population)
-
-**Phase 2: Federated Validation (Multiple Hospitals)**
-- Deploy to 5 diverse hospitals
-- Each hospital evaluates on their population
-- Results aggregated on blockchain
-
-**Expected Outcome:**
-```
-Research Model (trained on research cohort only):
-  • Research Center test set: 95% ✅
-  • Urban Hospital test set: 87% ❌
-  • Rural Hospital test set: 82% ❌
-  • Community Hospital test set: 85% ❌
-  → Poor generalization detected
-
-Federated Model (trained on all populations):
-  • Research Center test set: 94% ✅
-  • Urban Hospital test set: 93% ✅
-  • Rural Hospital test set: 91% ✅
-  • Community Hospital test set: 92% ✅
-  → Excellent generalization confirmed
-```
-
-### Minimum Requirements
-- **5+ hospitals** from different regions
-- **1,000+ samples** per hospital for validation
-- **Diverse demographics** represented
-- **Blockchain-recorded** validation results
-
----
-
-## System Requirements Summary
-
-### Technical Requirements
-
-| Requirement | Minimum | Recommended | Purpose |
-|-------------|---------|-------------|---------|
-| **Number of Hospitals** | 3 | 5-10 | Diversity and statistical power |
-| **Samples per Hospital** | 500 | 1,000+ | Sufficient training data |
-| **Total Network Samples** | 1,500 | 5,000+ | Global model quality |
-| **Geographic Diversity** | 2 regions | 3+ regions | Reduce geographic bias |
-| **Demographic Coverage** | 2 groups | 4+ groups | Reduce demographic bias |
-| **Training Rounds** | 1 | 3+ | Continuous improvement |
-
-### Infrastructure Requirements
-
-**Per Hospital:**
-- ✅ GPU-capable workstation (training ~1-2 hours)
-- ✅ Secure storage for patient data (HIPAA compliant)
-- ✅ Internet connection (for blockchain/IPFS)
-- ✅ MetaMask wallet with test ETH
-- ✅ Python environment (TensorFlow, etc.)
-
-**Network-wide:**
-- ✅ Deployed smart contract on Sepolia
-- ✅ IPFS pinning service (e.g., Pinata)
-- ✅ Oracle for aggregation (can be one hospital)
-- ✅ Test ETH distribution for gas fees
-
----
-
-## Expected Outcomes
-
-### With 3 Hospitals
-```
-Individual Hospital Accuracies: 87%, 89%, 91%
-Global Model Accuracy: ~91-92%
-Improvement: Moderate (2-5% for worst performer)
-Diversity: Limited
-Generalization: Good
-```
-
-### With 5 Hospitals
-```
-Individual Hospital Accuracies: 87%, 89%, 91%, 88%, 90%
-Global Model Accuracy: ~93-94%
-Improvement: Significant (5-7% for worst performer)
-Diversity: Good
-Generalization: Excellent
-```
-
-### With 10+ Hospitals
-```
-Individual Hospital Accuracies: Range 85-92%
-Global Model Accuracy: ~95-96%
-Improvement: Substantial (10%+ for worst performer)
-Diversity: Excellent
-Generalization: Outstanding
+Global Accuracy ≈ (1500/4300 × 93.78%) + (800/4300 × 91.00%) + (2000/4300 × 95.00%)
+Global Accuracy ≈ 32.73% + 16.93% + 44.19%
+Global Accuracy ≈ 93.85%
 ```
 
 ---
 
-## Key Takeaways
+## Technical Requirements
 
-### Why Multiple Hospitals are Essential:
+### Hardware Requirements (Per Hospital)
 
-1. **Statistical Power** 
-   - More data = lower variance = higher confidence
-   - Reduces overfitting to local patterns
+| Component | Minimum | Recommended |
+|-----------|---------|-------------|
+| GPU | NVIDIA GTX 1060 | NVIDIA RTX 3080+ |
+| RAM | 16 GB | 32 GB |
+| Storage | 50 GB | 100 GB SSD |
+| CPU | 4 cores | 8+ cores |
 
-2. **Diversity = Better Generalization**
-   - Different populations → model learns universal patterns
-   - Reduces bias present in any single dataset
+### Software Requirements
 
-3. **Ensemble Effect**
-   - Aggregating multiple models is statistically superior
-   - Similar to ensemble learning (Random Forest, etc.)
+- Python 3.8+
+- PyTorch 2.0+
+- CUDA 11.0+ (for GPU)
+- Node.js 18+ (for blockchain scripts)
+- MetaMask wallet
 
-4. **Privacy Preservation**
-   - No single hospital has monopoly on global model
-   - Transparent, auditable collaboration via blockchain
+### Network Requirements
 
-5. **Regulatory Compliance**
-   - Meets privacy regulations (HIPAA, GDPR)
-   - No raw data sharing required
-
-### Why Diversity is Critical:
-
-1. **Eliminates Single-Point-of-Failure**
-   - Not dependent on one hospital's data quality
-   - Robust to individual hospital's biases
-
-2. **Real-World Performance**
-   - Trained on diverse populations → works in diverse settings
-   - Handles equipment variations, protocol differences
-
-3. **Equitable Healthcare**
-   - Model works well for ALL demographics
-   - Reduces healthcare disparities
-
-4. **Research Validity**
-   - Results are generalizable to broader population
-   - Publishable with stronger claims
+- Stable internet connection
+- Access to Ethereum Sepolia testnet
+- IPFS access (Pinata or similar)
 
 ---
 
-## Conclusion
+## Compliance & Security
 
-This blockchain-based federated learning system **requires multiple hospitals (minimum 3, recommended 5+) with diverse patient populations** to:
+### Privacy Compliance
 
-✅ Achieve superior model accuracy through aggregation  
-✅ Ensure generalization across different demographics  
-✅ Preserve patient privacy via decentralized learning  
-✅ Enable compliant collaboration without data sharing  
-✅ Create equitable AI that works for all populations  
+- ✅ HIPAA compliant (US)
+- ✅ GDPR compliant (EU)
+- ✅ No patient data on blockchain
+- ✅ Encrypted model weights on IPFS
+- ✅ Audit trail via blockchain
 
-**Without multiple diverse hospitals, the system cannot achieve its primary goals of privacy-preserving, high-performance, generalizable breast cancer diagnosis.**
+### Security Features
+
+- AES-256-GCM encryption for model weights
+- SHA-256 hash verification
+- Smart contract access control
+- Pausable operations for emergencies
+- Reentrancy protection

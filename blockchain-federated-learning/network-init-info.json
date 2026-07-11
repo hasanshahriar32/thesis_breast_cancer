@@ -1,0 +1,25 @@
+{
+  "network": "sepolia",
+  "contractAddress": "0x1BE44922c9505E492eA93cfA4a673CE8ea106Ea1",
+  "genesisCID": "QmW4CN7kJcKniWTG5byWfCoKuwfsCN2Cti4bYbmNtruzWw",
+  "genesisHash": "0x8f06cf55c3c69e1c733ba08dcacffb650afd7fa7926c5e5b61af52683f6ce770",
+  "oracleAddress": "0x8cc0861616B52b115EAa64C1c8313AfdC4fF1d42",
+  "hospitals": [
+    {
+      "address": "0x684D0898D08766cA040a500b9060690a79540Cbe",
+      "name": "Boston General Hospital",
+      "region": "North America"
+    },
+    {
+      "address": "0x8f436B8df483cC87b42d5Df0CB629bC8Ed708177",
+      "name": "Royal London Hospital",
+      "region": "Europe"
+    },
+    {
+      "address": "0x373F4e6B2c1CFe1dC9A4C51eE5E15de451993106",
+      "name": "Tokyo Medical Center",
+      "region": "Asia Pacific"
+    }
+  ],
+  "initializedAt": "2026-02-13T20:01:38.369Z"
+}

@@ -3,11 +3,12 @@
   "hospital_id": "HOSP_001_BOSTON",
   "timestamp": "2025-01-20T14:45:30Z",
   "training_config": {
-    "batch_size": 32,
-    "epochs": 50,
+    "batch_size": 16,
+    "epochs": 10,
     "learning_rate": 0.0001,
     "optimizer": "Adam",
-    "loss_function": "binary_crossentropy",
+    "loss_function": "CrossEntropyLoss",
+    "scheduler": "StepLR",
     "early_stopping": {
       "enabled": true,
       "patience": 10,
@@ -24,81 +25,35 @@
       "benign": 600
     },
     "data_augmentation": {
-      "rotation_range": 20,
-      "width_shift_range": 0.1,
-      "height_shift_range": 0.1,
       "horizontal_flip": true,
-      "vertical_flip": false,
+      "vertical_flip": true,
+      "rotation_degrees": 10,
+      "color_jitter": {
+        "brightness": 0.1,
+        "contrast": 0.1
+      },
       "zoom_range": 0.15
     }
   },
-  "extractors_performance": {
-    "xray_extractor": {
-      "model_name": "extractor_xray.h5",
-      "base_architecture": "EfficientNetB0",
-      "input_shape": [224, 224, 3],
-      "output_dimensions": 1280,
-      "training_time_seconds": 3600,
-      "local_accuracy": 0.8756,
-      "local_precision": 0.8912,
-      "local_recall": 0.8534,
-      "local_f1_score": 0.8719,
-      "local_auc_roc": 0.9234,
-      "confusion_matrix": {
-        "true_positive": 128,
-        "true_negative": 82,
-        "false_positive": 10,
-        "false_negative": 5
-      }
-    },
-    "histopathology_extractor": {
-      "model_name": "extractor_histo.h5",
-      "base_architecture": "EfficientNetB0",
-      "input_shape": [224, 224, 3],
-      "output_dimensions": 1280,
-      "training_time_seconds": 4200,
-      "local_accuracy": 0.9123,
-      "local_precision": 0.9245,
-      "local_recall": 0.8987,
-      "local_f1_score": 0.9114,
-      "local_auc_roc": 0.9567,
-      "confusion_matrix": {
-        "true_positive": 135,
-        "true_negative": 85,
-        "false_positive": 3,
-        "false_negative": 2
-      }
-    },
-    "ultrasound_extractor": {
-      "model_name": "extractor_ultra.h5",
-      "base_architecture": "EfficientNetB0",
-      "input_shape": [224, 224, 3],
-      "output_dimensions": 1280,
-      "training_time_seconds": 3300,
-      "local_accuracy": 0.8445,
-      "local_precision": 0.8623,
-      "local_recall": 0.8234,
-      "local_f1_score": 0.8424,
-      "local_auc_roc": 0.9012,
-      "confusion_matrix": {
-        "true_positive": 124,
-        "true_negative": 78,
-        "false_positive": 15,
-        "false_negative": 8
-      }
-    }
-  },
-  "fusion_model_performance": {
-    "model_name": "fusion_model.h5",
-    "architecture": "Dense layers with concatenated features",
-    "input_dimensions": 3840,
+  "model_performance": {
+    "model_name": "efficientnet_b0_coordattn_histopathology.pth",
+    "model_class": "FastHistopathologyModel",
+    "architecture": "EfficientNet-B0 + Coordinate Attention",
+    "framework": "PyTorch",
+    "input_shape": [
+      3,
+      160,
+      160
+    ],
     "output_classes": 2,
-    "training_time_seconds": 1800,
+    "feature_dimensions": 1280,
+    "total_parameters": 5927510,
+    "training_time_seconds": 3600,
     "local_accuracy": 0.9378,
     "local_precision": 0.9467,
     "local_recall": 0.9289,
     "local_f1_score": 0.9377,
-    "local_auc_roc": 0.9756,
+    "local_auc_roc": 0.965,
     "confusion_matrix": {
       "true_positive": 139,
       "true_negative": 89,
@@ -108,7 +63,7 @@
     "classification_report": {
       "benign": {
         "precision": 0.9231,
-        "recall": 0.9560,
+        "recall": 0.956,
         "f1_score": 0.9393,
         "support": 91
       },
@@ -124,38 +79,23 @@
     "start_time": "2025-01-18T08:00:00Z",
     "end_time": "2025-01-20T14:45:30Z",
     "total_hours": 54.75,
-    "extractors_training_hours": 3.04,
-    "fusion_training_hours": 0.5,
+    "model_training_hours": 1.0,
     "data_preprocessing_hours": 48,
     "validation_hours": 2.21
   },
   "computational_resources": {
-    "gpu_hours": 6.5,
-    "total_flops": "3.2e+15",
-    "peak_memory_gb": 48,
-    "average_power_watts": 850
+    "gpu_hours": 3.5,
+    "total_flops": "1.1e+15",
+    "peak_memory_gb": 24,
+    "average_power_watts": 450
   },
   "feature_statistics": {
-    "xray_features": {
-      "mean": 0.456,
-      "std": 0.234,
-      "min": -2.345,
-      "max": 4.567,
-      "sparsity": 0.12
-    },
     "histopathology_features": {
       "mean": 0.523,
       "std": 0.289,
       "min": -1.987,
       "max": 3.876,
       "sparsity": 0.08
-    },
-    "ultrasound_features": {
-      "mean": 0.398,
-      "std": 0.267,
-      "min": -2.123,
-      "max": 4.234,
-      "sparsity": 0.15
     }
   },
   "data_privacy": {
@@ -165,7 +105,7 @@
     "differential_privacy": {
       "enabled": true,
       "epsilon": 1.0,
-      "delta": 1e-5
+      "delta": 1e-05
     }
   }
 }

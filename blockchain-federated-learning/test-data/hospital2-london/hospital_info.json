@@ -45,23 +45,11 @@
     "end_date": "2024-12-31"
   },
   "imaging_equipment": {
-    "xray": {
-      "manufacturer": "Hologic",
-      "model": "3Dimensions",
-      "resolution": "2560x2048",
-      "protocol": "Digital breast tomosynthesis"
-    },
     "histopathology": {
       "manufacturer": "Philips",
       "model": "IntelliSite Ultra Fast Scanner",
       "magnification": "40x",
       "staining": "H&E with immunohistochemistry"
-    },
-    "ultrasound": {
-      "manufacturer": "GE Healthcare",
-      "model": "Invenia ABUS",
-      "frequency": "6-15 MHz",
-      "mode": "Automated whole breast ultrasound"
     }
   }
 }

@@ -4,6 +4,15 @@
 
 Your complete blockchain-based federated learning system has been built with **Solidity** and **Node.js**!
 
+### 🧬 Model Architecture
+
+- **Backbone**: EfficientNet-B0 (pretrained on ImageNet)
+- **Attention**: Coordinate Attention mechanism
+- **Task**: Binary Classification (Benign vs Malignant)
+- **Framework**: PyTorch 2.0+
+- **Input Size**: 160×160 RGB histopathology images
+- **Parameters**: ~5.9 million
+
 ### 📂 Project Structure
 
 ```
@@ -13,9 +22,12 @@ blockchain-federated-learning/
 ├── scripts/
 │   ├── deploy.js                     ✅ Deployment script (Node.js)
 │   ├── interact.js                   ✅ Contract interaction (Node.js)
-│   └── submitUpdate.js               ✅ Submit model update (Node.js)
+│   ├── submitUpdate.js               ✅ Submit model update (Node.js)
+│   └── hospitalInteraction.js        ✅ Multi-hospital demo
 ├── test/
-│   └── FederatedModelRegistry.test.js ✅ 23 comprehensive tests
+│   └── FederatedModelRegistry.enhanced.test.js ✅ Comprehensive tests
+├── test-data/
+│   └── hospital{1,2,3}-*/            ✅ Sample hospital data
 ├── hardhat.config.js                  ✅ Hardhat configuration
 ├── package.json                       ✅ Node.js dependencies
 ├── .env.example                       ✅ Environment template
@@ -31,27 +43,28 @@ blockchain-federated-learning/
 ### Smart Contract (Solidity)
 
 ✅ **Participant Management**
-- Register/remove hospitals
-- Track participant list
+- Register/remove hospitals with metadata (name, region)
+- Track participant list and contributions
 - Access control with OpenZeppelin
 
 ✅ **Model Update Submission**
-- Submit encrypted IPFS CIDs
-- Store feature extractor weights
+- Submit encrypted IPFS CIDs for EfficientNet-B0 weights
+- Track comprehensive metrics (accuracy, AUC, sensitivity, specificity)
 - Prevent duplicate submissions
 - Emit events for aggregation
 
 ✅ **Global Model Publishing**
 - Oracle-based aggregation
-- Track model versions
-- Store accuracy metrics
-- Record total samples
+- Track model versions with lineage
+- Store accuracy and clinical metrics
+- Record total histopathology samples
 
 ✅ **Security Features**
 - Ownable (only owner can manage)
 - ReentrancyGuard (prevent attacks)
 - Pausable (emergency stop)
 - SHA-256 hash verification
+- Metric validation (≤100%)
 
 ✅ **Privacy Preservation**
 - NO patient data stored
@@ -61,20 +74,15 @@ blockchain-federated-learning/
 
 ---
 
-## 📊 Test Results
+## 📊 Metrics Tracked
 
-```
-✔ 23 passing (1s)
-
-Deployment ✓
-Participant Management ✓
-Model Update Submission ✓
-Global Model Publishing ✓
-Query Functions ✓
-Admin Functions ✓
-```
-
-All tests are passing! Your contract is production-ready.
+| Metric | Description | Format |
+|--------|-------------|--------|
+| Accuracy | Overall classification accuracy | × 100 (9550 = 95.50%) |
+| AUC | Area Under ROC Curve | × 10000 (9800 = 0.9800) |
+| Sensitivity | Recall for malignant detection | × 10000 |
+| Specificity | Recall for benign detection | × 10000 |
+| Samples | Number of histopathology images | Integer |
 
 ---
 
@@ -100,8 +108,8 @@ npm run deploy:sepolia
 ### 4. **Start Using**
 - Register participants
 - Set oracle address
-- Initialize genesis model
-- Submit updates
+- Initialize genesis model (pre-trained EfficientNet-B0)
+- Submit updates with histopathology training results
 - Coordinate federated learning!
 
 ---
@@ -112,12 +120,14 @@ npm run deploy:sepolia
 The main smart contract that:
 - Manages registered participants (hospitals)
 - Stores model metadata and IPFS CIDs
+- Tracks clinical metrics (AUC, sensitivity, specificity)
 - Coordinates federated learning rounds
 - Ensures privacy and security
 
 ### `deploy.js`
 Deploys the contract to Sepolia testnet:
-- Sets required submissions (default: 2)
+- Sets required submissions (default: 3)
+- Sets minimum samples per update (default: 500)
 - Displays contract address
 - Shows verification instructions
 
@@ -125,21 +135,21 @@ Deploys the contract to Sepolia testnet:
 Query contract status:
 - Current round
 - Participant count
-- Latest model info
+- Latest model info with metrics
 - Submission counts
 
 ### `submitUpdate.js`
 Submit model updates:
-- Upload encrypted weights to IPFS
-- Submit CID to blockchain
+- Upload encrypted EfficientNet-B0 weights to IPFS
+- Submit CID + metrics to blockchain
 - Track training contributions
 
 ### Test Suite
 Comprehensive tests covering:
 - All core functionality
 - Access control
+- Metric validation
 - Edge cases
-- Security features
 
 ---
 
@@ -149,18 +159,18 @@ Comprehensive tests covering:
 ✅ IPFS CIDs (pointers to encrypted models)
 ✅ SHA-256 hashes (for verification)
 ✅ Sample counts (no patient identifiers)
-✅ Model accuracy metrics
+✅ Model metrics (accuracy, AUC, sensitivity, specificity)
 ✅ Wallet addresses (MetaMask)
+✅ Hospital metadata (name, region)
 
 ### What's NOT Stored
-❌ Raw patient images
+❌ Raw histopathology images
 ❌ Patient names or IDs
 ❌ Feature vectors
 ❌ Any personally identifiable information
 
 ### What's Stored on IPFS (Encrypted)
-🔒 Fusion model weight updates
-🔒 Feature extractor weights (xray, histo, ultra)
+🔒 EfficientNet-B0 + CoordinateAttention model weights (.pth files)
 
 ---
 
@@ -172,7 +182,9 @@ Comprehensive tests covering:
 - **Runtime**: Node.js
 - **Security**: OpenZeppelin Contracts
 - **Wallet**: MetaMask
-- **Storage**: IPFS (for large files)
+- **Storage**: IPFS (for large model files)
+- **ML Framework**: PyTorch 2.0+
+- **Model**: EfficientNet-B0 + Coordinate Attention
 
 ---
 
@@ -180,11 +192,11 @@ Comprehensive tests covering:
 
 1. **Owner** deploys contract ✅ (Done!)
 2. **Owner** registers hospitals as participants
-3. **Hospitals** train models locally on private data
-4. **Hospitals** upload encrypted weights to IPFS
-5. **Hospitals** submit IPFS CIDs to blockchain
-6. **Oracle** aggregates when threshold is met
-7. **Oracle** publishes new global model
+3. **Hospitals** train EfficientNet-B0 locally on private histopathology data
+4. **Hospitals** upload encrypted model weights to IPFS
+5. **Hospitals** submit IPFS CIDs + metrics to blockchain
+6. **Oracle** aggregates when threshold is met (FedAvg)
+7. **Oracle** publishes new global model with aggregated metrics
 8. **Cycle repeats** → model improves without sharing patient data!
 
 ---
@@ -193,31 +205,10 @@ Comprehensive tests covering:
 
 - **SETUP_GUIDE.md**: Step-by-step deployment instructions
 - **README.md**: Complete technical documentation
-- **Smart_Contract_README.md**: In parent folder with detailed explanation
+- **docs/ENHANCED_CONTRACT_GUIDE.md**: Detailed contract explanation
 
 ---
 
 ## ✨ Success!
 
-Your blockchain-based federated learning smart contract is:
-- ✅ Compiled successfully
-- ✅ All tests passing (23/23)
-- ✅ Ready for deployment
-- ✅ Production-quality code
-- ✅ Fully documented
-
-You now have everything you need to deploy and run a privacy-preserving, decentralized federated learning system for breast cancer diagnosis!
-
----
-
-## 🆘 Need Help?
-
-Check the documentation:
-1. Read `SETUP_GUIDE.md` for deployment steps
-2. Read `README.md` for detailed usage
-3. Review test files to understand functionality
-4. Check Hardhat docs: https://hardhat.org
-
----
-
-**Built with ❤️ for privacy-preserving healthcare AI**
+Your blockchain-based federated learning system for histopathology breast cancer classification is ready! 🎉

@@ -20,9 +20,7 @@ class PatientService {
       logger.info(`Connecting to MongoDB...`);
       
       this.client = new MongoClient(mongoUrl, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        serverSelectionTimeoutMS: 10000, // Increased timeout to 10 seconds
+        serverSelectionTimeoutMS: 10000,
         connectTimeoutMS: 10000,
         socketTimeoutMS: 45000,
       });
@@ -225,15 +223,12 @@ class PatientService {
     if (!this.isConnected) throw new Error("Database not connected. Please ensure server started properly.");
 
     try {
-      const updateData = {
-        features: features,
-        updated_at: new Date(),
-        $inc: { version: 1 }
-      };
-
       const result = await this.collection.updateOne(
         { id: patientId, status: { $ne: 'deleted' } },
-        { $set: updateData }
+        {
+          $set: { features: features, updated_at: new Date() },
+          $inc: { version: 1 }
+        }
       );
 
       if (result.matchedCount === 0) {
@@ -262,20 +257,22 @@ class PatientService {
         filter.hospital_id = hospital_id;
       }
 
-      const update = {
+      const setData = {
         ...updateData,
-        updated_at: new Date(),
-        $inc: { version: 1 }
+        updated_at: new Date()
       };
 
       // Encrypt metadata if required
-      if (update.metadata && process.env.ENCRYPT_PATIENT_DATA === 'true') {
-        update.metadata_encrypted = encryptionService.encryptObject(update.metadata);
-        delete update.metadata;
-        update.encrypted = true;
+      if (setData.metadata && process.env.ENCRYPT_PATIENT_DATA === 'true') {
+        setData.metadata_encrypted = encryptionService.encryptObject(setData.metadata);
+        delete setData.metadata;
+        setData.encrypted = true;
       }
 
-      const result = await this.collection.updateOne(filter, { $set: update });
+      const result = await this.collection.updateOne(filter, {
+        $set: setData,
+        $inc: { version: 1 }
+      });
 
       if (result.matchedCount === 0) {
         throw new Error('Patient not found');

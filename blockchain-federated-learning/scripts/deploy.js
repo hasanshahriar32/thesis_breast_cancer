@@ -1,7 +1,9 @@
 const hre = require("hardhat");
+const fs = require("fs");
+const path = require("path");
 
 async function main() {
-  console.log("🚀 Starting deployment of Enhanced FederatedModelRegistry...\n");
+  console.log("🚀 Starting deployment of FederatedModelRegistry (Histopathology)...\n");
 
   // Get the deployer's account
   const [deployer] = await hre.ethers.getSigners();
@@ -12,12 +14,19 @@ async function main() {
   console.log("💰 Account balance:", hre.ethers.formatEther(balance), "ETH\n");
 
   // Configuration parameters
-  const requiredSubmissions = 3; // Minimum 3 hospitals for diversity (as per USE_CASES.md)
-  const minSamplesPerUpdate = 500; // Minimum 500 samples per hospital update
+  const requiredSubmissions = 3; // Minimum 3 hospitals for diversity
+  const minSamplesPerUpdate = 500; // Minimum 500 histopathology samples per hospital update
   
   console.log("⚙️  Configuration:");
   console.log("   - Required submissions per round:", requiredSubmissions);
-  console.log("   - Minimum samples per update:", minSamplesPerUpdate);
+  console.log("   - Minimum histopathology samples per update:", minSamplesPerUpdate);
+  console.log("");
+  console.log("🧬 Model Architecture:");
+  console.log("   - Backbone: EfficientNet-B0");
+  console.log("   - Attention: Coordinate Attention");
+  console.log("   - Task: Binary Classification (Benign vs Malignant)");
+  console.log("   - Input Size: 160×160 RGB");
+  console.log("   - Framework: PyTorch");
   console.log("");
 
   // Deploy the contract
@@ -52,14 +61,20 @@ async function main() {
   };
 
   console.log("💾 Deployment Info:", JSON.stringify(deploymentInfo, null, 2));
+  
+  // Save deployment info to file
+  const deploymentPath = path.join(__dirname, "../deployment-info.json");
+  fs.writeFileSync(deploymentPath, JSON.stringify(deploymentInfo, null, 2));
+  console.log("💾 Saved to:", deploymentPath);
   console.log("");
 
   // Instructions for next steps
   console.log("📖 Next Steps:");
   console.log("   1. Save the contract address:", contractAddress);
-  console.log("   2. Register participants using: registerParticipant(address)");
+  console.log("   2. Register participants using: registerParticipant(address, name, region)");
   console.log("   3. Set oracle address using: setOracleAddress(address)");
-  console.log("   4. Initialize genesis model using: initializeGenesisModel(cid, hash)");
+  console.log("   4. Initialize genesis model using: initializeGenesisModel(modelCID, hash)");
+  console.log("      - Upload pre-trained EfficientNet-B0 weights to IPFS first");
   console.log("");
 
   if (hre.network.name === "sepolia") {

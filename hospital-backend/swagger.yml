@@ -54,7 +54,7 @@ paths:
     post:
       tags: [Patients]
       summary: Upload patient data
-      description: Upload medical images (X-ray, Ultrasound, Histopathology) and metadata for a new patient.
+      description: Upload a histopathology image and metadata for a new patient.
       requestBody:
         required: true
         content:
@@ -67,15 +67,10 @@ paths:
                   format: json
                   description: JSON string containing patient metadata conforming to PatientMetadata schema.
                   example: '{"patientId": "P123456", "age": 45, "diagnosis": "malignant"}'
-                xray:
-                  type: string
-                  format: binary
                 histopathology:
                   type: string
                   format: binary
-                ultrasound:
-                  type: string
-                  format: binary
+                  description: Histopathology image file (PNG, JPG, TIF)
       responses:
         '201':
           description: Patient data uploaded successfully
@@ -95,11 +90,7 @@ paths:
                   file_urls:
                     type: object
                     properties:
-                      xray:
-                        $ref: '#/components/schemas/BlobStorageFile'
                       histopathology:
-                        $ref: '#/components/schemas/BlobStorageFile'
-                      ultrasound:
                         $ref: '#/components/schemas/BlobStorageFile'
                   features_extracted:
                     type: integer
@@ -157,7 +148,7 @@ paths:
     post:
       tags: [IPFS]
       summary: Upload patient images to IPFS
-      description: Upload encrypted patient images (xray, histopathology, ultrasound) to IPFS and store CIDs.
+      description: Upload encrypted patient histopathology image to IPFS and store CID.
       parameters:
         - in: path
           name: patientId
@@ -180,11 +171,7 @@ paths:
                   ipfsCids:
                     type: object
                     properties:
-                      xray:
-                        type: string
                       histopathology:
-                        type: string
-                      ultrasound:
                         type: string
         '404':
           $ref: '#/components/responses/NotFound'
@@ -197,7 +184,7 @@ paths:
     post:
       tags: [Models]
       summary: Extract features for a patient
-      description: Extract AI features from patient's medical images using EfficientNetB0.
+      description: Extract AI features from patient's histopathology image using EfficientNet-B0 + Coordinate Attention.
       parameters:
         - in: path
           name: patientId
@@ -220,16 +207,19 @@ paths:
                   features:
                     type: object
                     properties:
-                      total_dimensions:
+                      dimensions:
                         type: integer
-                      xray_dimensions:
-                        type: integer
-                      histo_dimensions:
-                        type: integer
-                      ultra_dimensions:
-                        type: integer
-                  abnormality_detection:
+                        example: 1280
+                        description: Feature vector dimensions from EfficientNet-B0
+                  prediction:
                     type: object
+                    properties:
+                      label:
+                        type: string
+                        enum: ["Benign", "Malignant"]
+                      confidence:
+                        type: number
+                        format: float
         '404':
           $ref: '#/components/responses/NotFound'
         '400':
@@ -354,12 +344,12 @@ components:
           type: string
           format: uri
           description: Public URL to access the file on Vercel Blob Storage
-          example: "https://ym58rk9cpdeglu7z.public.blob.vercel-storage.com/patients/7dfd5f6f-3ef8-4325-bd85-2bb53ffb1463/xray-1762836125293-gjiLyMkCuh6lFa2lI6vkHR2EfRTqEL.encrypted"
+          example: "https://storage.example.com/patients/7dfd5f6f/histopathology-1762836125293.encrypted"
         downloadUrl:
           type: string
           format: uri
           description: Download URL with download parameter
-          example: "https://ym58rk9cpdeglu7z.public.blob.vercel-storage.com/patients/7dfd5f6f-3ef8-4325-bd85-2bb53ffb1463/xray-1762836125293-gjiLyMkCuh6lFa2lI6vkHR2EfRTqEL.encrypted?download=1"
+          example: "https://storage.example.com/patients/7dfd5f6f/histopathology-1762836125293.encrypted?download=1"
         encrypted:
           type: boolean
           description: Whether the file is encrypted

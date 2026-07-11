@@ -26,10 +26,11 @@ class RequirementsVerifier:
         self.MIN_SAMPLES_PER_HOSPITAL = 500
         self.MAX_ACCURACY = 1.0  # 100%
         
-        # Network requirements
-        self.REQUIRED_MODALITIES = 3
-        self.REQUIRED_MODELS = 4  # fusion + 3 extractors
-        self.FEATURE_DIMENSIONS = 3840
+        # Network requirements (single-modality architecture)
+        self.REQUIRED_MODALITIES = 1
+        self.REQUIRED_MODELS = 1  # single model
+        self.FEATURE_DIMENSIONS = 1280
+        self.TOTAL_PARAMETERS = 5927510
         
         # Compliance requirements
         self.REQUIRED_ENCRYPTION = "AES-256-GCM"
@@ -72,13 +73,13 @@ class RequirementsVerifier:
                     with open(file_path, 'r') as f:
                         hospital_data[key] = json.load(f)
                 else:
-                    print(f"❌ Missing file: {file_path}")
+                    print(f"\u274c Missing file: {file_path}")
                     return None
             
             return hospital_data
             
         except Exception as e:
-            print(f"❌ Error loading data from {hospital_path}: {e}")
+            print(f"\u274c Error loading data from {hospital_path}: {e}")
             return None
     
     def verify_minimum_hospitals(self, hospitals: List[Dict]) -> Tuple[bool, str]:
@@ -86,9 +87,9 @@ class RequirementsVerifier:
         count = len(hospitals)
         
         if count >= self.MIN_HOSPITALS:
-            return True, f"✅ Hospital count: {count}/{self.MIN_HOSPITALS} (PASS)"
+            return True, f"\u2705 Hospital count: {count}/{self.MIN_HOSPITALS} (PASS)"
         else:
-            return False, f"❌ Hospital count: {count}/{self.MIN_HOSPITALS} (FAIL)"
+            return False, f"\u274c Hospital count: {count}/{self.MIN_HOSPITALS} (FAIL)"
     
     def verify_sample_requirements(self, hospitals: List[Dict]) -> Tuple[bool, str]:
         """Verify minimum samples per hospital."""
@@ -105,9 +106,9 @@ class RequirementsVerifier:
                 status = "FAIL"
                 all_pass = False
             
-            results.append(f"   • {hospital_id}: {samples:,} samples ({status})")
+            results.append(f"   \u2022 {hospital_id}: {samples:,} samples ({status})")
         
-        result_text = f"{'✅' if all_pass else '❌'} Sample Requirements:\n" + "\n".join(results)
+        result_text = f"{'\u2705' if all_pass else '\u274c'} Sample Requirements:\n" + "\n".join(results)
         return all_pass, result_text
     
     def verify_accuracy_bounds(self, hospitals: List[Dict]) -> Tuple[bool, str]:
@@ -117,7 +118,7 @@ class RequirementsVerifier:
         
         for hospital in hospitals:
             hospital_id = hospital['info']['hospital_id']
-            accuracy = hospital['training']['fusion_model_performance']['local_accuracy']
+            accuracy = hospital['training']['model_performance']['local_accuracy']
             
             if 0.0 <= accuracy <= self.MAX_ACCURACY:
                 status = "PASS"
@@ -125,35 +126,31 @@ class RequirementsVerifier:
                 status = "FAIL"
                 all_pass = False
             
-            results.append(f"   • {hospital_id}: {accuracy:.4f} ({status})")
+            results.append(f"   \u2022 {hospital_id}: {accuracy:.4f} ({status})")
         
-        result_text = f"{'✅' if all_pass else '❌'} Accuracy Requirements:\n" + "\n".join(results)
+        result_text = f"{'\u2705' if all_pass else '\u274c'} Accuracy Requirements:\n" + "\n".join(results)
         return all_pass, result_text
     
     def verify_model_completeness(self, hospitals: List[Dict]) -> Tuple[bool, str]:
-        """Verify all required models are present."""
-        required_models = ['fusion_model', 'xray_extractor', 'histopathology_extractor', 'ultrasound_extractor']
+        """Verify the single model is present."""
         results = []
         all_pass = True
         
         for hospital in hospitals:
             hospital_id = hospital['info']['hospital_id']
-            models = hospital['weights']['models']
             
-            missing_models = []
-            for model in required_models:
-                if model not in models:
-                    missing_models.append(model)
+            has_model = 'model' in hospital['weights']
             
-            if not missing_models:
+            if has_model:
                 status = "PASS"
-                results.append(f"   • {hospital_id}: All {len(required_models)} models present ({status})")
+                params = hospital['weights']['model']['architecture']['total_parameters']
+                results.append(f"   \u2022 {hospital_id}: Model present ({params:,} params) ({status})")
             else:
                 status = "FAIL"
                 all_pass = False
-                results.append(f"   • {hospital_id}: Missing {missing_models} ({status})")
+                results.append(f"   \u2022 {hospital_id}: Model missing ({status})")
         
-        result_text = f"{'✅' if all_pass else '❌'} Model Completeness:\n" + "\n".join(results)
+        result_text = f"{'\u2705' if all_pass else '\u274c'} Model Completeness:\n" + "\n".join(results)
         return all_pass, result_text
     
     def verify_feature_dimensions(self, hospitals: List[Dict]) -> Tuple[bool, str]:
@@ -163,8 +160,8 @@ class RequirementsVerifier:
         
         for hospital in hospitals:
             hospital_id = hospital['info']['hospital_id']
-            combined_features = hospital['features']['combined_features']
-            total_dims = combined_features['total_dimensions']
+            feature_space = hospital['features']['feature_space']
+            total_dims = feature_space['total_dimensions']
             
             if total_dims == self.FEATURE_DIMENSIONS:
                 status = "PASS"
@@ -172,9 +169,9 @@ class RequirementsVerifier:
                 status = "FAIL"
                 all_pass = False
             
-            results.append(f"   • {hospital_id}: {total_dims} dimensions ({status})")
+            results.append(f"   \u2022 {hospital_id}: {total_dims} dimensions ({status})")
         
-        result_text = f"{'✅' if all_pass else '❌'} Feature Dimensions:\n" + "\n".join(results)
+        result_text = f"{'\u2705' if all_pass else '\u274c'} Feature Dimensions:\n" + "\n".join(results)
         return all_pass, result_text
     
     def verify_encryption_standards(self, hospitals: List[Dict]) -> Tuple[bool, str]:
@@ -185,25 +182,18 @@ class RequirementsVerifier:
         for hospital in hospitals:
             hospital_id = hospital['info']['hospital_id']
             
-            # Check model encryption
-            models = hospital['weights']['models']
-            hospital_pass = True
+            model_data = hospital['weights']['model']
+            encryption = model_data['encryption']['algorithm']
             
-            for model_name, model_data in models.items():
-                encryption = model_data['encryption']['algorithm']
-                if encryption != self.REQUIRED_ENCRYPTION:
-                    hospital_pass = False
-                    break
-            
-            if hospital_pass:
+            if encryption == self.REQUIRED_ENCRYPTION:
                 status = "PASS"
             else:
                 status = "FAIL"
                 all_pass = False
             
-            results.append(f"   • {hospital_id}: {self.REQUIRED_ENCRYPTION} ({status})")
+            results.append(f"   \u2022 {hospital_id}: {self.REQUIRED_ENCRYPTION} ({status})")
         
-        result_text = f"{'✅' if all_pass else '❌'} Encryption Standards:\n" + "\n".join(results)
+        result_text = f"{'\u2705' if all_pass else '\u274c'} Encryption Standards:\n" + "\n".join(results)
         return all_pass, result_text
     
     def verify_ipfs_integration(self, hospitals: List[Dict]) -> Tuple[bool, str]:
@@ -218,7 +208,6 @@ class RequirementsVerifier:
             valid_cids = 0
             for upload in uploads:
                 cid = upload['ipfs_cid']
-                # Basic CID validation (should start with Qm and be 46 chars)
                 if cid.startswith('Qm') and len(cid) == 46:
                     valid_cids += 1
             
@@ -228,9 +217,9 @@ class RequirementsVerifier:
                 status = "FAIL"
                 all_pass = False
             
-            results.append(f"   • {hospital_id}: {valid_cids}/{self.REQUIRED_MODELS} valid CIDs ({status})")
+            results.append(f"   \u2022 {hospital_id}: {valid_cids}/{self.REQUIRED_MODELS} valid CIDs ({status})")
         
-        result_text = f"{'✅' if all_pass else '❌'} IPFS Integration:\n" + "\n".join(results)
+        result_text = f"{'\u2705' if all_pass else '\u274c'} IPFS Integration:\n" + "\n".join(results)
         return all_pass, result_text
     
     def verify_blockchain_readiness(self, hospitals: List[Dict]) -> Tuple[bool, str]:
@@ -250,9 +239,9 @@ class RequirementsVerifier:
                 status = f"FAIL ({len(failed_checks)} issues)"
                 all_pass = False
             
-            results.append(f"   • {hospital_id}: {status}")
+            results.append(f"   \u2022 {hospital_id}: {status}")
         
-        result_text = f"{'✅' if all_pass else '❌'} Blockchain Readiness:\n" + "\n".join(results)
+        result_text = f"{'\u2705' if all_pass else '\u274c'} Blockchain Readiness:\n" + "\n".join(results)
         return all_pass, result_text
     
     def verify_compliance_requirements(self, hospitals: List[Dict]) -> Tuple[bool, str]:
@@ -270,7 +259,6 @@ class RequirementsVerifier:
             hospital_id = hospital['info']['hospital_id']
             expected_compliance = compliance_map.get(hospital_id, 'Unknown')
             
-            # Check privacy settings
             privacy = hospital['training']['data_privacy']
             phi_removed = privacy['phi_removed']
             differential_privacy = privacy['differential_privacy']['enabled']
@@ -281,15 +269,15 @@ class RequirementsVerifier:
                 status = "FAIL"
                 all_pass = False
             
-            results.append(f"   • {hospital_id}: {expected_compliance} compliant ({status})")
+            results.append(f"   \u2022 {hospital_id}: {expected_compliance} compliant ({status})")
         
-        result_text = f"{'✅' if all_pass else '❌'} Compliance Requirements:\n" + "\n".join(results)
+        result_text = f"{'\u2705' if all_pass else '\u274c'} Compliance Requirements:\n" + "\n".join(results)
         return all_pass, result_text
     
     def calculate_network_statistics(self, hospitals: List[Dict]) -> Dict[str, Any]:
         """Calculate overall network statistics."""
         total_samples = sum(h['training']['dataset_info']['total_samples'] for h in hospitals)
-        accuracies = [h['training']['fusion_model_performance']['local_accuracy'] for h in hospitals]
+        accuracies = [h['training']['model_performance']['local_accuracy'] for h in hospitals]
         avg_accuracy = sum(accuracies) / len(accuracies)
         
         regions = list(set(h['info']['region'] for h in hospitals))
@@ -306,23 +294,23 @@ class RequirementsVerifier:
             'regions': regions,
             'countries': countries,
             'total_model_size_mb': total_model_size / (1024 * 1024),
-            'feature_dimensions': self.FEATURE_DIMENSIONS
+            'feature_dimensions': self.FEATURE_DIMENSIONS,
+            'total_parameters': self.TOTAL_PARAMETERS
         }
     
     def run_comprehensive_verification(self):
         """Run all verification tests."""
-        print("🔍 FEDERATED LEARNING REQUIREMENTS VERIFICATION")
+        print("\U0001f50d FEDERATED LEARNING REQUIREMENTS VERIFICATION")
         print("=" * 60)
         
         hospitals = self.load_all_hospital_data()
         
         if not hospitals:
-            print("❌ No hospital data found. Cannot verify requirements.")
+            print("\u274c No hospital data found. Cannot verify requirements.")
             return False
         
-        print(f"📊 Loaded data from {len(hospitals)} hospitals\n")
+        print(f"\U0001f4ca Loaded data from {len(hospitals)} hospitals\n")
         
-        # Run all verification tests
         tests = [
             ("Minimum Hospitals", self.verify_minimum_hospitals),
             ("Sample Requirements", self.verify_sample_requirements),
@@ -345,55 +333,53 @@ class RequirementsVerifier:
             if not passed:
                 all_passed = False
         
-        # Display results
-        print("📋 VERIFICATION RESULTS:")
+        print("\U0001f4cb VERIFICATION RESULTS:")
         print("-" * 40)
         
         for test_name, passed, message in results:
             print(f"\n{message}")
         
-        # Network statistics
-        print(f"\n📊 NETWORK STATISTICS:")
+        print(f"\n\U0001f4ca NETWORK STATISTICS:")
         print("-" * 40)
         
         stats = self.calculate_network_statistics(hospitals)
-        print(f"✅ Participating Hospitals: {stats['hospitals']}")
-        print(f"✅ Total Patient Samples: {stats['total_samples']:,}")
-        print(f"✅ Average Accuracy: {stats['avg_accuracy']:.4f}")
-        print(f"✅ Geographic Coverage: {', '.join(stats['regions'])}")
-        print(f"✅ Countries: {', '.join(stats['countries'])}")
-        print(f"✅ Total Model Storage: {stats['total_model_size_mb']:.1f} MB")
-        print(f"✅ Feature Dimensions: {stats['feature_dimensions']:,}")
+        print(f"\u2705 Participating Hospitals: {stats['hospitals']}")
+        print(f"\u2705 Total Patient Samples: {stats['total_samples']:,}")
+        print(f"\u2705 Average Accuracy: {stats['avg_accuracy']:.4f}")
+        print(f"\u2705 Geographic Coverage: {', '.join(stats['regions'])}")
+        print(f"\u2705 Countries: {', '.join(stats['countries'])}")
+        print(f"\u2705 Total Model Storage: {stats['total_model_size_mb']:.1f} MB")
+        print(f"\u2705 Feature Dimensions: {stats['feature_dimensions']:,}")
+        print(f"\u2705 Model Parameters: {stats['total_parameters']:,}")
         
-        # Final verdict
-        print(f"\n🎯 FINAL VERDICT:")
+        print(f"\n\U0001f3af FINAL VERDICT:")
         print("-" * 40)
         
         if all_passed:
-            print("✅ ALL REQUIREMENTS VERIFIED!")
-            print("🚀 Network is ready for federated learning operations.")
-            print("📝 Smart contract deployment and model training can proceed.")
+            print("\u2705 ALL REQUIREMENTS VERIFIED!")
+            print("\U0001f680 Network is ready for federated learning operations.")
+            print("\U0001f4dd Smart contract deployment and model training can proceed.")
         else:
             failed_tests = [name for name, passed, _ in results if not passed]
-            print("❌ VERIFICATION FAILED!")
-            print(f"🔧 Failed tests: {', '.join(failed_tests)}")
-            print("🛠️  Please address the issues before proceeding.")
+            print("\u274c VERIFICATION FAILED!")
+            print(f"\U0001f527 Failed tests: {', '.join(failed_tests)}")
+            print("\U0001f6e0\ufe0f  Please address the issues before proceeding.")
         
         return all_passed
 
 
 def main():
     """Main execution function."""
-    print("🔍 Federated Learning Requirements Verifier")
+    print("\U0001f50d Federated Learning Requirements Verifier")
     print("Checking network compliance with smart contract requirements...\n")
     
     verifier = RequirementsVerifier()
     success = verifier.run_comprehensive_verification()
     
     if success:
-        print(f"\n✅ Verification complete - All requirements met!")
+        print(f"\n\u2705 Verification complete - All requirements met!")
     else:
-        print(f"\n❌ Verification failed - Please fix issues and retry.")
+        print(f"\n\u274c Verification failed - Please fix issues and retry.")
     
     return success
 

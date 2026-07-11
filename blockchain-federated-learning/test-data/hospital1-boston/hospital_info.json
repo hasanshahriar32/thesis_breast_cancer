@@ -45,23 +45,11 @@
     "end_date": "2024-12-31"
   },
   "imaging_equipment": {
-    "xray": {
-      "manufacturer": "GE Healthcare",
-      "model": "Senographe Pristina",
-      "resolution": "2048x2048",
-      "protocol": "Standard mammography"
-    },
     "histopathology": {
       "manufacturer": "Leica Biosystems",
       "model": "Aperio GT 450",
       "magnification": "40x",
       "staining": "H&E (Hematoxylin and Eosin)"
-    },
-    "ultrasound": {
-      "manufacturer": "Philips",
-      "model": "EPIQ Elite",
-      "frequency": "7.5-12 MHz",
-      "mode": "B-mode with Doppler"
     }
   }
 }

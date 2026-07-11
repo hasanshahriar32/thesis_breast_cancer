@@ -3,218 +3,110 @@
   "session_id": "SESSION_LONDON_002_2025Q1",
   "hospital_id": "HOSP_002_LONDON",
   "timestamp": "2025-01-21T11:30:00Z",
-  "models": {
-    "fusion_model": {
-      "model_file": "fusion_model.h5",
-      "framework": "TensorFlow/Keras",
-      "framework_version": "2.15.0",
-      "encrypted_ipfs_cid": "QmBk1Tt6CDx2M0oE3mySuZxtWxN1n0vB3rX8iV7jZ6aX9q",
-      "encryption": {
-        "algorithm": "AES-256-GCM",
-        "key_derivation": "PBKDF2-SHA256",
-        "iterations": 100000
-      },
-      "file_info": {
-        "original_size_bytes": 15728640,
-        "compressed_size_bytes": 12582912,
-        "encrypted_size_bytes": 12583424,
-        "checksum_sha256": "b4f3e2d5c6a789012345678901234567890123456789012345678901234bcde"
-      },
-      "architecture": {
-        "total_parameters": 3847426,
-        "trainable_parameters": 3847426,
-        "non_trainable_parameters": 0,
-        "layers": [
-          {
-            "name": "input_layer",
-            "type": "InputLayer",
-            "output_shape": [null, 3840],
-            "parameters": 0
-          },
-          {
-            "name": "dense_1",
-            "type": "Dense",
-            "output_shape": [null, 512],
-            "activation": "relu",
-            "parameters": 1966592
-          },
-          {
-            "name": "dropout_1",
-            "type": "Dropout",
-            "rate": 0.5,
-            "parameters": 0
-          },
-          {
-            "name": "dense_2",
-            "type": "Dense",
-            "output_shape": [null, 256],
-            "activation": "relu",
-            "parameters": 131328
-          },
-          {
-            "name": "dropout_2",
-            "type": "Dropout",
-            "rate": 0.3,
-            "parameters": 0
-          },
-          {
-            "name": "output_layer",
-            "type": "Dense",
-            "output_shape": [null, 2],
-            "activation": "softmax",
-            "parameters": 514
-          }
-        ]
-      },
-      "weight_statistics": {
-        "mean": 0.0019,
-        "std": 0.1189,
-        "min": -0.9654,
-        "max": 0.9432,
-        "l1_norm": 467.123,
-        "l2_norm": 24.789
-      }
+  "model": {
+    "model_file": "efficientnet_b0_coordattn_histopathology.pth",
+    "framework": "PyTorch",
+    "framework_version": "2.0.0",
+    "model_class": "FastHistopathologyModel",
+    "encrypted_ipfs_cid": "QmBk1Tt6CDx2M0oE3mySuZxtWxN1n0vB3rX8iV7jZ6aX9q",
+    "encryption": {
+      "algorithm": "AES-256-GCM",
+      "key_derivation": "PBKDF2-SHA256",
+      "iterations": 100000
     },
-    "xray_extractor": {
-      "model_file": "extractor_xray.h5",
-      "framework": "TensorFlow/Keras",
-      "framework_version": "2.15.0",
-      "encrypted_ipfs_cid": "QmCl2Uu7DEy3N1pF4nzTvXwtYyP2o1wC4sY9jW8kA7bY0r",
-      "encryption": {
-        "algorithm": "AES-256-GCM",
-        "key_derivation": "PBKDF2-SHA256",
-        "iterations": 100000
-      },
-      "file_info": {
-        "original_size_bytes": 16777216,
-        "compressed_size_bytes": 13421772,
-        "encrypted_size_bytes": 13422336,
-        "checksum_sha256": "c5d4e3f6a7b8901234567890123456789012345678901234567890123456cdef"
-      },
-      "architecture": {
-        "base_model": "EfficientNetB0",
-        "total_parameters": 4049571,
-        "trainable_parameters": 4007548,
-        "non_trainable_parameters": 42023,
-        "custom_top_layers": [
-          {
-            "name": "global_average_pooling",
-            "type": "GlobalAveragePooling2D",
-            "parameters": 0
-          },
-          {
-            "name": "output_features",
-            "type": "Dense",
-            "output_shape": [null, 1280],
-            "activation": "relu",
-            "parameters": 1280
-          }
-        ]
-      },
-      "weight_statistics": {
-        "mean": 0.0015,
-        "std": 0.1023,
-        "min": -0.9123,
-        "max": 0.8876,
-        "l1_norm": 534.567,
-        "l2_norm": 29.123
-      }
+    "file_info": {
+      "original_size_bytes": 23710040,
+      "compressed_size_bytes": 21200000,
+      "encrypted_size_bytes": 21200256,
+      "checksum_sha256": "b4f3e2d5c6a789012345678901234567890123456789012345678901234bcde"
     },
-    "histopathology_extractor": {
-      "model_file": "extractor_histo.h5",
-      "framework": "TensorFlow/Keras",
-      "framework_version": "2.15.0",
-      "encrypted_ipfs_cid": "QmDm3Vv8EFz4O2qG5oATwYxuZyQ3p2xD5tZ0kX9lB8cZ1s",
-      "encryption": {
-        "algorithm": "AES-256-GCM",
-        "key_derivation": "PBKDF2-SHA256",
-        "iterations": 100000
-      },
-      "file_info": {
-        "original_size_bytes": 16777216,
-        "compressed_size_bytes": 13421772,
-        "encrypted_size_bytes": 13422336,
-        "checksum_sha256": "d6e5f4a7b8c9012345678901234567890123456789012345678901234567def0"
-      },
-      "architecture": {
-        "base_model": "EfficientNetB0",
-        "total_parameters": 4049571,
-        "trainable_parameters": 4007548,
-        "non_trainable_parameters": 42023,
-        "custom_top_layers": [
-          {
-            "name": "global_average_pooling",
-            "type": "GlobalAveragePooling2D",
-            "parameters": 0
-          },
-          {
-            "name": "output_features",
-            "type": "Dense",
-            "output_shape": [null, 1280],
-            "activation": "relu",
-            "parameters": 1280
-          }
-        ]
-      },
-      "weight_statistics": {
-        "mean": 0.0021,
-        "std": 0.1067,
-        "min": -0.9234,
-        "max": 0.8567,
-        "l1_norm": 489.234,
-        "l2_norm": 27.654
-      }
+    "architecture": {
+      "base_model": "EfficientNet-B0",
+      "attention_mechanism": "Coordinate Attention",
+      "total_parameters": 5927510,
+      "trainable_parameters": 5885487,
+      "non_trainable_parameters": 42023,
+      "input_shape": [
+        3,
+        160,
+        160
+      ],
+      "output_classes": 2,
+      "components": [
+        {
+          "name": "efficientnet_b0_backbone",
+          "type": "Feature Extractor",
+          "output_features": 1280,
+          "parameters": 4007548
+        },
+        {
+          "name": "coordinate_attention",
+          "type": "Attention Module",
+          "parameters": 10240
+        },
+        {
+          "name": "classifier_head",
+          "type": "Classification Head",
+          "layers": [
+            {
+              "name": "adaptive_avg_pool",
+              "type": "AdaptiveAvgPool2d",
+              "output": [
+                1,
+                1
+              ],
+              "parameters": 0
+            },
+            {
+              "name": "dropout",
+              "type": "Dropout",
+              "rate": 0.3,
+              "parameters": 0
+            },
+            {
+              "name": "fc1",
+              "type": "Linear",
+              "in_features": 1280,
+              "out_features": 512,
+              "parameters": 655872
+            },
+            {
+              "name": "relu",
+              "type": "ReLU",
+              "parameters": 0
+            },
+            {
+              "name": "dropout2",
+              "type": "Dropout",
+              "rate": 0.2,
+              "parameters": 0
+            },
+            {
+              "name": "fc2",
+              "type": "Linear",
+              "in_features": 512,
+              "out_features": 2,
+              "parameters": 1026
+            }
+          ],
+          "parameters": 656898
+        }
+      ]
     },
-    "ultrasound_extractor": {
-      "model_file": "extractor_ultra.h5",
-      "framework": "TensorFlow/Keras",
-      "framework_version": "2.15.0",
-      "encrypted_ipfs_cid": "QmEn4Ww9FGa5P3rH6pBUxZyvAzR4q3yE6uA1lY0mC9dA2t",
-      "encryption": {
-        "algorithm": "AES-256-GCM",
-        "key_derivation": "PBKDF2-SHA256",
-        "iterations": 100000
-      },
-      "file_info": {
-        "original_size_bytes": 16777216,
-        "compressed_size_bytes": 13421772,
-        "encrypted_size_bytes": 13422336,
-        "checksum_sha256": "e7f6a5b8c9d0123456789012345678901234567890123456789012345678ef01"
-      },
-      "architecture": {
-        "base_model": "EfficientNetB0",
-        "total_parameters": 4049571,
-        "trainable_parameters": 4007548,
-        "non_trainable_parameters": 42023,
-        "custom_top_layers": [
-          {
-            "name": "global_average_pooling",
-            "type": "GlobalAveragePooling2D",
-            "parameters": 0
-          },
-          {
-            "name": "output_features",
-            "type": "Dense",
-            "output_shape": [null, 1280],
-            "activation": "relu",
-            "parameters": 1280
-          }
-        ]
-      },
-      "weight_statistics": {
-        "mean": 0.0011,
-        "std": 0.0945,
-        "min": -0.8876,
-        "max": 0.8123,
-        "l1_norm": 545.678,
-        "l2_norm": 30.234
-      }
+    "weight_statistics": {
+      "mean": 0.0019,
+      "std": 0.1189,
+      "min": -0.9654,
+      "max": 0.9432,
+      "l1_norm": 467.123,
+      "l2_norm": 24.789
     }
   },
   "aggregation_info": {
-    "total_model_size_bytes": 53850240,
-    "total_parameters": 15996139,
-    "compression_ratio": 1.25,
-    "encryption_overhead_bytes": 1024
+    "aggregation_ready": true,
+    "model_format": "PyTorch state_dict",
+    "total_model_size_bytes": 21200256,
+    "total_parameters": 5927510,
+    "models_count": 1
   }
 }

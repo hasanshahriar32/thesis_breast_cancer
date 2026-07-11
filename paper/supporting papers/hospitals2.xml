@@ -1,0 +1,147 @@
+<mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- Outer Container -->
+    <mxCell id="2" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="30" y="100" width="1100" height="400" as="geometry" />
+    </mxCell>
+
+    <!-- Central Server Circle -->
+    <mxCell id="3" value="CENTRAL SERVER&#xa;HOSPITAL" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5d5d5;strokeColor=#666666;strokeWidth=2;fontSize=12;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
+      <mxGeometry x="430" y="120" width="200" height="180" as="geometry" />
+    </mxCell>
+
+    <!-- Hospital Icon Central -->
+    <mxCell id="4" value="🏥" style="text;html=1;align=center;verticalAlign=middle;fontSize=40;" vertex="1" parent="1">
+      <mxGeometry x="490" y="185" width="80" height="60" as="geometry" />
+    </mxCell>
+
+    <!-- Global Model Box -->
+    <mxCell id="5" value="GLOBAL&#xa;MODEL" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="455" y="340" width="110" height="80" as="geometry" />
+    </mxCell>
+
+    <!-- Global Model Icon -->
+    <mxCell id="6" value="" style="shape=mxgraph.network.hub;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+      <mxGeometry x="490" y="348" width="40" height="40" as="geometry" />
+    </mxCell>
+
+    <!-- ==================== HOSPITAL A (Top Left) ==================== -->
+    <mxCell id="10" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="50" y="120" width="340" height="160" as="geometry" />
+    </mxCell>
+
+    <!-- Hospital A building -->
+    <mxCell id="11" value="HOSPITAL A" style="shape=mxgraph.floorplan.hospital;fillColor=#001F5B;strokeColor=#001F5B;fontColor=#000000;fontSize=10;fontStyle=1;verticalLabelPosition=bottom;labelPosition=center;verticalAlign=top;" vertex="1" parent="1">
+      <mxGeometry x="60" y="140" width="60" height="60" as="geometry" />
+    </mxCell>
+
+    <!-- Hospital A Database -->
+    <mxCell id="12" value="Database" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#FF8000;strokeColor=#FF8000;fontColor=#000000;fontSize=9;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="1">
+      <mxGeometry x="140" y="140" width="50" height="55" as="geometry" />
+    </mxCell>
+
+    <!-- Hospital A Patient Data -->
+    <mxCell id="13" value="Patient's&#xa;Data&#xa;images" style="shape=image;html=1;verticalLabelPosition=bottom;labelPosition=center;verticalAlign=top;fontSize=9;image;image=img/lib/active_directory/generic_server.svg;" vertex="1" parent="1">
+      <mxGeometry x="210" y="140" width="50" height="55" as="geometry" />
+    </mxCell>
+
+    <!-- Hospital A Local Model -->
+    <mxCell id="14" value="Local&#xa;Client's&#xa;Model" style="shape=mxgraph.network.hub;fillColor=#000000;strokeColor=#000000;fontSize=9;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="1">
+      <mxGeometry x="280" y="145" width="50" height="50" as="geometry" />
+    </mxCell>
+
+    <!-- ==================== HOSPITAL B (Bottom Left) ==================== -->
+    <mxCell id="20" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="50" y="300" width="340" height="160" as="geometry" />
+    </mxCell>
+
+    <mxCell id="21" value="HOSPITAL B" style="shape=mxgraph.floorplan.hospital;fillColor=#001F5B;strokeColor=#001F5B;fontColor=#000000;fontSize=10;fontStyle=1;verticalLabelPosition=bottom;labelPosition=center;verticalAlign=top;" vertex="1" parent="1">
+      <mxGeometry x="60" y="320" width="60" height="60" as="geometry" />
+    </mxCell>
+
+    <mxCell id="22" value="Database" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#FF8000;strokeColor=#FF8000;fontColor=#000000;fontSize=9;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="1">
+      <mxGeometry x="140" y="320" width="50" height="55" as="geometry" />
+    </mxCell>
+
+    <mxCell id="23" value="Patient's&#xa;Data&#xa;images" style="shape=image;html=1;verticalLabelPosition=bottom;labelPosition=center;verticalAlign=top;fontSize=9;image;image=img/lib/active_directory/generic_server.svg;" vertex="1" parent="1">
+      <mxGeometry x="210" y="320" width="50" height="55" as="geometry" />
+    </mxCell>
+
+    <mxCell id="24" value="Local&#xa;Client's&#xa;Model" style="shape=mxgraph.network.hub;fillColor=#000000;strokeColor=#000000;fontSize=9;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="1">
+      <mxGeometry x="280" y="325" width="50" height="50" as="geometry" />
+    </mxCell>
+
+    <!-- ==================== HOSPITAL C (Top Right) ==================== -->
+    <mxCell id="30" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="670" y="120" width="340" height="160" as="geometry" />
+    </mxCell>
+
+    <mxCell id="31" value="HOSPITAL C" style="shape=mxgraph.floorplan.hospital;fillColor=#001F5B;strokeColor=#001F5B;fontColor=#000000;fontSize=10;fontStyle=1;verticalLabelPosition=bottom;labelPosition=center;verticalAlign=top;" vertex="1" parent="1">
+      <mxGeometry x="940" y="140" width="60" height="60" as="geometry" />
+    </mxCell>
+
+    <mxCell id="32" value="Database" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#FF8000;strokeColor=#FF8000;fontColor=#000000;fontSize=9;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="1">
+      <mxGeometry x="680" y="140" width="50" height="55" as="geometry" />
+    </mxCell>
+
+    <mxCell id="33" value="Patient's&#xa;Data&#xa;images" style="shape=image;html=1;verticalLabelPosition=bottom;labelPosition=center;verticalAlign=top;fontSize=9;image;image=img/lib/active_directory/generic_server.svg;" vertex="1" parent="1">
+      <mxGeometry x="750" y="140" width="50" height="55" as="geometry" />
+    </mxCell>
+
+    <mxCell id="34" value="Local&#xa;Client's&#xa;Model" style="shape=mxgraph.network.hub;fillColor=#000000;strokeColor=#000000;fontSize=9;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="1">
+      <mxGeometry x="820" y="145" width="50" height="50" as="geometry" />
+    </mxCell>
+
+    <!-- ==================== HOSPITAL D (Bottom Right) ==================== -->
+    <mxCell id="40" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="670" y="300" width="340" height="160" as="geometry" />
+    </mxCell>
+
+    <mxCell id="41" value="HOSPITAL D" style="shape=mxgraph.floorplan.hospital;fillColor=#001F5B;strokeColor=#001F5B;fontColor=#000000;fontSize=10;fontStyle=1;verticalLabelPosition=bottom;labelPosition=center;verticalAlign=top;" vertex="1" parent="1">
+      <mxGeometry x="940" y="320" width="60" height="60" as="geometry" />
+    </mxCell>
+
+    <mxCell id="42" value="Database" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#FF8000;strokeColor=#FF8000;fontColor=#000000;fontSize=9;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="1">
+      <mxGeometry x="680" y="320" width="50" height="55" as="geometry" />
+    </mxCell>
+
+    <mxCell id="43" value="Patient's&#xa;Data&#xa;images" style="shape=image;html=1;verticalLabelPosition=bottom;labelPosition=center;verticalAlign=top;fontSize=9;image;image=img/lib/active_directory/generic_server.svg;" vertex="1" parent="1">
+      <mxGeometry x="750" y="320" width="50" height="55" as="geometry" />
+    </mxCell>
+
+    <mxCell id="44" value="Local&#xa;Client's&#xa;Model" style="shape=mxgraph.network.hub;fillColor=#000000;strokeColor=#000000;fontSize=9;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="1">
+      <mxGeometry x="820" y="325" width="50" height="50" as="geometry" />
+    </mxCell>
+
+    <!-- ==================== CONNECTIONS ==================== -->
+
+    <!-- Hospital A Local Model -> Central Server -->
+    <mxCell id="50" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;" edge="1" source="14" target="3" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- Hospital B Local Model -> Central Server -->
+    <mxCell id="51" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.7;entryDx=0;entryDy=0;strokeWidth=2;" edge="1" source="24" target="3" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- Central Server -> Hospital C Local Model -->
+    <mxCell id="52" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;" edge="1" source="3" target="34" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- Central Server -> Hospital D Local Model -->
+    <mxCell id="53" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.7;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;" edge="1" source="3" target="44" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- Central Server -> Global Model -->
+    <mxCell id="54" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=2;" edge="1" source="3" target="5" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+  </root>
+</mxGraphModel>

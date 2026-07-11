@@ -3,78 +3,97 @@
   "hospital_id": "HOSP_001_BOSTON",
   "submission_timestamp": "2025-01-20T15:00:00Z",
   "blockchain_network": "Ethereum Sepolia Testnet",
-  "contract_address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  "contract_address": "0x1BE44922c9505E492eA93cfA4a673CE8ea106Ea1",
   "submitter_wallet": "0x1234567890123456789012345678901234567890",
+  "model_info": {
+    "architecture": "EfficientNet-B0 + CoordinateAttention",
+    "task": "Binary Classification (Benign vs Malignant)",
+    "framework": "PyTorch 2.0.0",
+    "input_size": "160x160 RGB",
+    "num_classes": 2,
+    "class_labels": [
+      "Benign",
+      "Malignant"
+    ],
+    "total_parameters": 5927510,
+    "attention_type": "Coordinate Attention"
+  },
   "transaction_data": {
     "function_name": "submitUpdate",
     "function_parameters": {
-      "fusionCid": "QmXg9Pp2ytZ8H6kA9iuQqYtpVvL8j7qX9kS4dN3eR2wT5m",
-      "xrayCid": "QmYh8Qq3zuA9J7lB0jvRrZuqWwM9k8sY0oU5fO4gS3xU6n",
-      "histoCid": "QmZi9Rr4ABv0K8mC1kwSsYvrXxN0l9tZ1pV6gP5hT4yV7o",
-      "ultraCid": "QmAj0Ss5BCw1L9nD2lxTtZwsYyO1m0uA2qW7hQ6iU5zW8p",
-      "localAccuracy": "93.78%",
-      "samples": 1500,
-      "trainingDuration": 197100
+      "modelCid": "QmXg9Pp2ytZ8H6kA9iuQqYtpVvL8j7qX9kS4dN3eR2wT5m",
+      "modelHash": "0x8a7b9c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b",
+      "sampleCount": 1500,
+      "localAccuracy": 9378,
+      "localAUC": 9650,
+      "localSensitivity": 9400,
+      "localSpecificity": 9300,
+      "trainingDuration": 3600
     },
     "gas_estimate": {
-      "gas_limit": 500000,
+      "gas_limit": 300000,
       "max_fee_per_gas": "50000000000",
       "max_priority_fee_per_gas": "2000000000",
-      "estimated_cost_eth": "0.025",
-      "estimated_cost_usd": "62.50"
+      "estimated_cost_eth": "0.015",
+      "estimated_cost_usd": "37.50"
     }
   },
   "ipfs_uploads": [
     {
-      "model_name": "fusion_model.h5",
+      "model_name": "efficientnet_b0_coordattn_histopathology.pth",
       "ipfs_cid": "QmXg9Pp2ytZ8H6kA9iuQqYtpVvL8j7qX9kS4dN3eR2wT5m",
       "upload_timestamp": "2025-01-20T14:50:00Z",
-      "file_size_bytes": 12583168,
-      "encryption_status": "AES-256-GCM",
-      "pinning_service": "Pinata",
-      "pin_status": "pinned"
-    },
-    {
-      "model_name": "extractor_xray.h5",
-      "ipfs_cid": "QmYh8Qq3zuA9J7lB0jvRrZuqWwM9k8sY0oU5fO4gS3xU6n",
-      "upload_timestamp": "2025-01-20T14:52:00Z",
-      "file_size_bytes": 13422080,
-      "encryption_status": "AES-256-GCM",
-      "pinning_service": "Pinata",
-      "pin_status": "pinned"
-    },
-    {
-      "model_name": "extractor_histo.h5",
-      "ipfs_cid": "QmZi9Rr4ABv0K8mC1kwSsYvrXxN0l9tZ1pV6gP5hT4yV7o",
-      "upload_timestamp": "2025-01-20T14:54:00Z",
-      "file_size_bytes": 13422080,
-      "encryption_status": "AES-256-GCM",
-      "pinning_service": "Pinata",
-      "pin_status": "pinned"
-    },
-    {
-      "model_name": "extractor_ultra.h5",
-      "ipfs_cid": "QmAj0Ss5BCw1L9nD2lxTtZwsYyO1m0uA2qW7hQ6iU5zW8p",
-      "upload_timestamp": "2025-01-20T14:56:00Z",
-      "file_size_bytes": 13422080,
+      "file_size_bytes": 21200000,
       "encryption_status": "AES-256-GCM",
       "pinning_service": "Pinata",
       "pin_status": "pinned"
     }
   ],
+  "training_metrics": {
+    "accuracy": "93.78%",
+    "auc_roc": 0.965,
+    "sensitivity": "94.00%",
+    "specificity": "93.00%",
+    "f1_score": 0.9389,
+    "precision": "93.78%",
+    "recall": "94.00%",
+    "confusion_matrix": {
+      "true_positive": 705,
+      "true_negative": 702,
+      "false_positive": 48,
+      "false_negative": 45
+    },
+    "total_samples": 1500,
+    "benign_samples": 750,
+    "malignant_samples": 750
+  },
+  "training_config": {
+    "batch_size": 16,
+    "learning_rate": 0.0001,
+    "num_epochs": 10,
+    "optimizer": "Adam",
+    "loss_function": "CrossEntropyLoss",
+    "scheduler": "StepLR",
+    "augmentation": {
+      "horizontal_flip": true,
+      "vertical_flip": true,
+      "rotation_degrees": 10,
+      "color_jitter": {
+        "brightness": 0.1,
+        "contrast": 0.1
+      }
+    }
+  },
   "weight_metadata_submission": {
     "function_name": "storeWeightMetadata",
     "parameters": {
       "version": 1,
-      "fusionParams": 3847426,
-      "xrayParams": 4049571,
-      "histoParams": 4049571,
-      "ultraParams": 4049571,
-      "fusionSize": 12583168,
-      "xraySize": 13422080,
-      "histoSize": 13422080,
-      "ultraSize": 13422080,
-      "framework": "TensorFlow/Keras 2.15.0"
+      "totalParameters": 5927510,
+      "modelSize": 21200000,
+      "inputSize": 160,
+      "framework": "PyTorch",
+      "frameworkVersion": "2.0.0",
+      "architecture": "EfficientNet-B0 + CoordinateAttention"
     }
   },
   "validation_checks": {
@@ -82,7 +101,10 @@
     "hospital_active": true,
     "minimum_samples_met": true,
     "accuracy_valid": true,
-    "ipfs_cids_valid": true,
+    "auc_valid": true,
+    "sensitivity_valid": true,
+    "specificity_valid": true,
+    "ipfs_cid_valid": true,
     "gas_sufficient": true,
     "ready_to_submit": true
   },
@@ -91,6 +113,7 @@
     "oracle_job_id": "d5270d1c311941d0b08bead21fea7747",
     "verification_data": {
       "accuracy_verified": true,
+      "auc_verified": true,
       "sample_count_verified": true,
       "training_duration_verified": true,
       "ipfs_availability_verified": true
@@ -98,60 +121,27 @@
     "oracle_fee_eth": "0.001",
     "oracle_callback_gas_limit": 200000
   },
-  "expected_events": [
-    {
-      "event_name": "UpdateSubmitted",
-      "expected_params": {
-        "hospital": "0x1234567890123456789012345678901234567890",
-        "version": 1,
-        "fusionCid": "QmXg9Pp2ytZ8H6kA9iuQqYtpVvL8j7qX9kS4dN3eR2wT5m",
-        "samples": 1500
-      }
-    }
-  ],
-  "post_submission_actions": [
-    {
-      "action": "Monitor transaction status",
-      "tool": "Etherscan Sepolia",
-      "estimated_confirmation_blocks": 3
-    },
-    {
-      "action": "Verify event emission",
-      "event": "UpdateSubmitted",
-      "verification_method": "Contract event logs"
-    },
-    {
-      "action": "Check submission count",
-      "query": "getCurrentVersion()",
-      "expected_result": "Incremented version counter"
-    },
-    {
-      "action": "Verify IPFS pinning",
-      "check": "All 4 CIDs remain pinned",
-      "duration": "Permanent"
-    }
-  ],
-  "rollback_plan": {
-    "conditions": [
-      "Transaction fails",
-      "Gas price too high",
-      "Oracle verification fails",
-      "IPFS unavailable"
+  "dataset_info": {
+    "name": "BreaKHis Histopathology Dataset",
+    "total_images": 1500,
+    "image_format": "PNG",
+    "magnification_levels": [
+      "40X",
+      "100X",
+      "200X",
+      "400X"
     ],
-    "actions": [
-      "Revert local state",
-      "Unpin IPFS files (optional)",
-      "Log error details",
-      "Alert administrator",
-      "Retry with adjusted parameters"
-    ]
+    "data_split": {
+      "train": 1200,
+      "validation": 150,
+      "test": 150
+    }
   },
   "compliance": {
     "hipaa_compliant": true,
     "gdpr_compliant": true,
     "data_anonymized": true,
-    "phi_removed": true,
-    "encryption_level": "AES-256-GCM",
-    "audit_trail": "Complete transaction history on blockchain"
+    "irb_approved": true,
+    "data_retention_policy": "No patient data stored on-chain"
   }
 }

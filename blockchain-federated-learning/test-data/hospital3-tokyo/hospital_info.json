@@ -43,23 +43,11 @@
     "end_date": "2024-12-31"
   },
   "imaging_equipment": {
-    "xray": {
-      "manufacturer": "Fujifilm",
-      "model": "AMULET Innovality",
-      "resolution": "3072x2304",
-      "protocol": "Digital mammography with tomosynthesis"
-    },
     "histopathology": {
       "manufacturer": "Olympus",
       "model": "VS200 Research Slide Scanner",
       "magnification": "40x",
       "staining": "H&E with advanced immunohistochemistry"
-    },
-    "ultrasound": {
-      "manufacturer": "Canon Medical Systems",
-      "model": "Aplio i-series",
-      "frequency": "5-18 MHz",
-      "mode": "B-mode with elastography and 3D imaging"
     }
   }
 }

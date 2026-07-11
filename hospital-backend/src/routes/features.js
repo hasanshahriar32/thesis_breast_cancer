@@ -6,7 +6,7 @@ const featureExtractor = require('../services/featureExtractor');
 // Extract features from uploaded images
 router.post('/extract', async (req, res) => {
   try {
-    const { patient_id, modalities = ['xray', 'histopathology', 'ultrasound'] } = req.body;
+    const { patient_id, modalities = ['histopathology'] } = req.body;
 
     if (!patient_id) {
       return res.status(400).json({ error: 'Patient ID required' });
@@ -48,13 +48,11 @@ router.get('/status', async (req, res) => {
   try {
     const status = {
       models_loaded: featureExtractor.isInitialized,
-      available_modalities: ['xray', 'histopathology', 'ultrasound'],
+      available_modalities: ['histopathology'],
       feature_dimensions: {
-        xray: 1280,
-        histopathology: 1280,
-        ultrasound: 1280,
-        total_combined: 3840
+        histopathology: 1280
       },
+      model_architecture: 'EfficientNet-B0 + CoordinateAttention',
       extraction_capabilities: {
         batch_processing: true,
         real_time: true,
@@ -93,11 +91,6 @@ router.get('/categories', (req, res) => {
         'boundary_definition',
         'architectural_distortion'
       ],
-      vascular_imaging: [
-        'vascular_patterns',
-        'doppler_flow',
-        'perfusion_metrics'
-      ],
       pathological_markers: [
         'calcification_patterns',
         'necrosis_areas',
@@ -111,7 +104,6 @@ router.get('/categories', (req, res) => {
         'genomic_instability'
       ],
       texture_analysis: [
-        'echo_texture',
         'surface_irregularity',
         'homogeneity_measures'
       ]

@@ -189,7 +189,7 @@ class EncryptionService {
   encryptText(text) {
     try {
       const iv = crypto.randomBytes(this.ivLength);
-      const cipher = crypto.createCipher(this.algorithm, this.secretKey, iv);
+      const cipher = crypto.createCipheriv(this.algorithm, this.secretKey, iv);
       
       const encrypted = Buffer.concat([
         cipher.update(Buffer.from(text, 'utf8')),
@@ -215,7 +215,7 @@ class EncryptionService {
       const tag = encryptedData.slice(this.ivLength, this.ivLength + this.tagLength);
       const encrypted = encryptedData.slice(this.ivLength + this.tagLength);
       
-      const decipher = crypto.createDecipher(this.algorithm, this.secretKey, iv);
+      const decipher = crypto.createDecipheriv(this.algorithm, this.secretKey, iv);
       decipher.setAuthTag(tag);
       
       const decrypted = Buffer.concat([
@@ -305,7 +305,7 @@ class EncryptionService {
       
       // Encrypt with model-specific key
       const iv = crypto.randomBytes(this.ivLength);
-      const cipher = crypto.createCipher(this.algorithm, keyBuffer, iv);
+      const cipher = crypto.createCipheriv(this.algorithm, keyBuffer, iv);
       
       const encrypted = Buffer.concat([
         cipher.update(weightsBuffer),
@@ -344,7 +344,7 @@ class EncryptionService {
       const encrypted = encryptedBuffer.slice(this.ivLength + this.tagLength);
       
       // Decrypt
-      const decipher = crypto.createDecipher(this.algorithm, keyBuffer, iv);
+      const decipher = crypto.createDecipheriv(this.algorithm, keyBuffer, iv);
       decipher.setAuthTag(tag);
       
       const decrypted = Buffer.concat([

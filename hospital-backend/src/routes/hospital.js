@@ -12,7 +12,8 @@ router.get('/info', (req, res) => {
       hospital_address: process.env.HOSPITAL_ADDRESS,
       contact_email: process.env.HOSPITAL_EMAIL,
       capabilities: {
-        modalities: ['xray', 'histopathology', 'ultrasound'],
+        modalities: ['histopathology'],
+        model_architecture: 'EfficientNet-B0 + CoordinateAttention',
         encryption_enabled: process.env.ENCRYPT_FILES === 'true',
         ipfs_enabled: true,
         blockchain_enabled: true

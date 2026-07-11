@@ -5,11 +5,15 @@ const crypto = require("crypto");
 const CONTRACT_ADDRESS = "YOUR_CONTRACT_ADDRESS_HERE";
 
 /**
- * Example script to submit a model update
- * This simulates a hospital submitting their local training results
+ * Example script to submit a histopathology model update
+ * This simulates a hospital submitting their local EfficientNet-B0 training results
+ * 
+ * Model: EfficientNet-B0 + Coordinate Attention
+ * Task: Binary Classification (Benign vs Malignant)
+ * Input: 160×160 histopathology images
  */
 async function main() {
-  console.log("📤 Submitting Model Update to FederatedModelRegistry...\n");
+  console.log("📤 Submitting Histopathology Model Update to FederatedModelRegistry...\n");
 
   // Get the contract
   const FederatedModelRegistry = await hre.ethers.getContractFactory("FederatedModelRegistry");
@@ -34,19 +38,27 @@ async function main() {
     return;
   }
 
-  // Simulate model update data
+  // Simulate model update data for EfficientNet-B0 histopathology model
   // In real scenario, these would be actual IPFS CIDs from uploading your model
-  const encryptedUpdateCID = "QmExampleFusionModelCID123456789"; // IPFS CID of encrypted fusion model
-  const extractorCID = "QmExampleExtractorsCID987654321"; // IPFS CID of extractors
-  const sampleCount = 500; // Number of patient samples you trained on (no PII)
+  const modelCID = "QmExampleHistopathologyModelCID123456789"; // IPFS CID of encrypted model weights
+  const sampleCount = 1500; // Number of histopathology samples trained on (no PII)
+  const localAccuracy = 9378; // 93.78% accuracy
+  const localAUC = 9650; // 0.9650 AUC score
+  const localSensitivity = 9400; // 94% sensitivity (malignant detection)
+  const localSpecificity = 9300; // 93% specificity (benign detection)
+  const trainingDuration = 3600; // 1 hour training time
 
-  // Calculate hash (in real scenario, this would be SHA-256 of your actual model file)
+  // Calculate hash (in real scenario, this would be SHA-256 of your actual .pth file)
   const hash = "0x" + crypto.randomBytes(32).toString("hex");
 
   console.log("\n📦 Update Details:");
-  console.log("   - Encrypted Update CID:", encryptedUpdateCID);
-  console.log("   - Extractor Weights CID:", extractorCID);
-  console.log("   - Sample Count:", sampleCount);
+  console.log("   - Model CID:", modelCID);
+  console.log("   - Histopathology Samples:", sampleCount);
+  console.log("   - Local Accuracy:", (localAccuracy / 100).toFixed(2) + "%");
+  console.log("   - Local AUC:", (localAUC / 10000).toFixed(4));
+  console.log("   - Local Sensitivity:", (localSensitivity / 10000 * 100).toFixed(2) + "%");
+  console.log("   - Local Specificity:", (localSpecificity / 10000 * 100).toFixed(2) + "%");
+  console.log("   - Training Duration:", trainingDuration + " seconds");
   console.log("   - Hash:", hash);
   console.log("");
 
@@ -54,10 +66,14 @@ async function main() {
     console.log("⏳ Submitting transaction...");
     
     const tx = await contract.submitUpdate(
-      encryptedUpdateCID,
+      modelCID,
       hash,
       sampleCount,
-      extractorCID
+      localAccuracy,
+      localAUC,
+      localSensitivity,
+      localSpecificity,
+      trainingDuration
     );
 
     console.log("📡 Transaction sent:", tx.hash);
