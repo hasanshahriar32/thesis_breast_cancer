@@ -40,11 +40,10 @@ The implementation flow is:
 
 To evaluate the effectiveness of FedProx over FedAvg, we conduct experiments across 15 communication rounds with 5 local training epochs per round. We test FedProx with proximal parameters $\mu \in \{0.001, 0.01, 0.1, 0.5, 1.0\}$ and compare against FedAvg ($\mu = 0$) as the baseline. The non-IID data distribution across hospitals is characterized by the following class ratios:
 
-\begin{itemize}
-    \item \textbf{Boston Medical Center}: 25\% benign / 75\% malignant (cancer research specialty)
-    \item \textbf{London General Hospital}: 50\% benign / 50\% malignant (balanced general population)
-    \item \textbf{Tokyo University Hospital}: 75\% benign / 25\% malignant (screening center)
-\end{itemize}
+- **Boston Medical Center**: 25% benign / 75% malignant (cancer research specialty)
+- **London General Hospital**: 50% benign / 50% malignant (balanced general population)
+- **Tokyo University Hospital**: 75% benign / 25% malignant (screening center)
+
 
 [INSERT Table from tables/comparison_table.tex HERE]
 
