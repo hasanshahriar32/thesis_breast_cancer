@@ -331,8 +331,16 @@ def run_experiment(mu, init_state, hospital_datasets, test_loader,
 
 
 def main():
-    result_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    try:
+        result_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    except NameError:
+        # Running inside a Jupyter notebook — __file__ is not defined
+        import pathlib
+        _cwd = pathlib.Path.cwd()
+        # Walk up until we find the 'data' sibling dir (i.e. fedprox-result/)
+        result_dir = str(_cwd if (_cwd / 'data').exists() else _cwd.parent)
     os.makedirs(os.path.join(result_dir, 'data'), exist_ok=True)
+
     
     print("=" * 65)
     print("  FedProx vs FedAvg — Federated Learning Experiment")
