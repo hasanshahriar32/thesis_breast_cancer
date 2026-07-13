@@ -1,245 +1,330 @@
 #!/usr/bin/env python3
 """
-Build the consolidated FedProx research notebook.
-
-Reads:
-    paper_sections/methodology.md
-    data/experiment_results.json
-    figures/*.png
-
-Writes:
-    FedProx_Research_Complete.ipynb
+Build FedProx_Research_Complete.ipynb — comprehensive research notebook.
 """
 
-import os
-import sys
 import json
-import base64
 from pathlib import Path
 
-# ── resolve paths ──
 try:
     BASE = Path(__file__).resolve().parent
 except NameError:
     BASE = Path.cwd()
 
 
-def md_cell(source):
-    """Create a markdown notebook cell."""
-    if isinstance(source, list):
-        lines = source
-    else:
-        lines = [line + '\n' for line in source.split('\n')]
-    return {
-        'cell_type': 'markdown',
-        'metadata': {},
-        'source': lines,
-    }
+def md_cell(text):
+    lines = [l + '\n' for l in text.split('\n')]
+    return {'cell_type': 'markdown', 'metadata': {}, 'source': lines}
 
 
-def code_cell(source):
-    """Create a code notebook cell."""
-    if isinstance(source, list):
-        lines = source
-    else:
-        lines = [line + '\n' for line in source.split('\n')]
-    return {
-        'cell_type': 'code',
-        'metadata': {},
-        'source': lines,
-        'execution_count': None,
-        'outputs': [],
-    }
+def code_cell(text):
+    lines = [l + '\n' for l in text.split('\n')]
+    return {'cell_type': 'code', 'metadata': {},
+            'source': lines, 'execution_count': None, 'outputs': []}
 
 
-def image_to_base64(img_path):
-    """Encode an image file as base64 string."""
-    with open(img_path, 'rb') as f:
-        return base64.b64encode(f.read()).decode('utf-8')
-
-
-def build_notebook():
+def build():
     cells = []
 
     # ── Title ──
     cells.append(md_cell(
-        '# FedProx vs FedAvg: Federated Breast Cancer Histopathology Classification\n'
-        '\n'
-        '> **Complete Research Notebook**  \n'
-        '> Model: EfficientNet-B0 + Fast Coordinate Attention (5.9M params)  \n'
-        '> Datasets: BreaKHis + Breast Cancer + Histopathological MSI (19,155 images)  \n'
-        '> Aggregation: FedProx (Li et al., 2020) vs FedAvg (McMahan et al., 2017)\n'
+"""# Federated Learning for Breast Cancer Histopathology Classification
+## FedProx vs FedAvg: A Comparative Study Across Non-IID Hospital Sites
+
+---
+| | |
+|---|---|
+| **Model** | EfficientNet-B0 + Fast Coordinate Attention |
+| **Parameters** | 5,927,510 |
+| **Datasets** | BreaKHis · Breast Cancer Dataset · Histopathological MSI |
+| **Total Images** | 19,155 histopathology images |
+| **Algorithm** | FedProx (Li et al., 2020) vs FedAvg (McMahan et al., 2017) |
+| **Communication Rounds** | 20 |
+| **Hospital Sites** | 3 (non-IID partitioning) |
+"""
     ))
 
-    # ── Setup cell ──
+    # ── Setup ──
+    cells.append(md_cell('## Setup'))
     cells.append(code_cell(
-        'import os, json, sys\n'
-        'import numpy as np\n'
-        'import matplotlib.pyplot as plt\n'
-        'from pathlib import Path\n'
-        'from IPython.display import display, Markdown, Image\n'
-        '\n'
-        '# Resolve base directory\n'
-        'try:\n'
-        '    BASE = Path(__file__).resolve().parent\n'
-        'except NameError:\n'
-        '    BASE = Path.cwd()\n'
-        '\n'
-        'print(f"Working directory: {BASE}")\n'
+"""import json, warnings
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+from pathlib import Path
+from IPython.display import Image, display, Markdown
+warnings.filterwarnings('ignore')
+
+try:
+    BASE = Path(__file__).resolve().parent
+except NameError:
+    BASE = Path.cwd()
+
+with open(BASE / 'data' / 'experiment_results.json') as f:
+    R = json.load(f)
+
+print(f'Loaded: {len(R["experiments"])} experiments, {len(R["mu_sweep"])} mu values')
+print(f'Total dataset images: {R["dataset_info"]["total_images"]:,}')"""
     ))
+
+    # ── Background ──
+    cells.append(md_cell(
+"""## 1. Background & Motivation
+
+### 1.1 The Federated Learning Problem
+
+Breast cancer histopathology diagnosis relies on slide images that are:
+- **Privacy-sensitive**: patient data cannot leave hospital premises
+- **Heterogeneous**: different scanners, staining protocols, magnifications across sites
+- **Imbalanced**: cancer-speciality centres see far more malignant cases
+
+**Federated Learning (FL)** trains a global model across distributed clients without
+centralising raw data. The server maintains a global model $w^t$; at each round $t$:
+
+1. Broadcast $w^t$ to all clients
+2. Each client minimises its local loss $F_k(w)$
+3. Server aggregates updates: $w^{t+1} = \\sum_k \\frac{n_k}{n} w_k$
+
+### 1.2 The Non-IID Challenge
+
+When each hospital's data distribution differs (Non-IID), local gradient steps
+can *diverge* from the global optimum — a phenomenon called **client drift**.
+
+FedProx (Li et al., 2020) addresses this by adding a **proximal term** to each
+client's local objective:
+
+$$\\mathcal{L}_k(w) = F_k(w) + \\frac{\\mu}{2}\\|w - w^t\\|^2$$
+
+This term acts as a soft anchor: clients are penalised for drifting too far from
+the last received global model $w^t$. When $\\mu=0$, FedProx reduces to FedAvg.
+"""
+    ))
+
+    # ── Datasets ──
+    cells.append(md_cell('## 2. Dataset Overview'))
+    cells.append(code_cell(
+"""ds = R['dataset_info']['datasets']
+print(f'{\"Dataset\":<35s} {\"Benign\":>8s} {\"Malignant\":>10s} {\"Total\":>8s} {\"Balance\":>9s}')
+print('-' * 75)
+for d in ds:
+    bal = d['benign'] / d['count'] * 100
+    print(f'{d[\"name\"]:<35s} {d[\"benign\"]:>8,} {d[\"malignant\"]:>10,} {d[\"count\"]:>8,} {bal:>8.1f}%')
+print('-' * 75)
+tot_b = sum(d['benign'] for d in ds)
+tot_m = sum(d['malignant'] for d in ds)
+tot   = tot_b + tot_m
+print(f'{\"TOTAL\":<35s} {tot_b:>8,} {tot_m:>10,} {tot:>8,} {tot_b/tot*100:>8.1f}%')"""
+    ))
+    cells.append(md_cell('### Dataset Distribution'))
+    cells.append(code_cell("Image(filename=str(BASE / 'figures' / 'fig5_dataset_dist.png'), width=800)"))
 
     # ── Methodology ──
-    meth_path = BASE / 'paper_sections' / 'methodology.md'
-    if meth_path.exists():
-        cells.append(md_cell('---\n## Methodology\n'))
-        meth_text = meth_path.read_text()
-        cells.append(md_cell(meth_text))
+    cells.append(md_cell(
+"""## 3. Methodology
 
-    # ── Load results ──
-    cells.append(md_cell('---\n## Experimental Results\n'))
-    cells.append(code_cell(
-        '# Load experiment results\n'
-        'results_path = BASE / "data" / "experiment_results.json"\n'
-        'with open(results_path) as f:\n'
-        '    results = json.load(f)\n'
-        '\n'
-        'print(f"Loaded results with {len(results[\'experiments\'])} experiments")\n'
-        'print(f"μ sweep: {len(results.get(\'mu_sweep\', []))} configurations")\n'
+### 3.1 Model Architecture
+
+**FastHistopathologyModel** (from `model_code (4).ipynb`):
+
+| Layer | Details |
+|---|---|
+| Backbone | EfficientNet-B0, ImageNet pre-trained |
+| Attention | Fast Coordinate Attention (1280-channel) |
+| Pooling | Adaptive Average → 1280-d vector |
+| Head | Dropout → Linear(1280→256) → BN → ReLU → Linear(256→2) |
+| Input | 160 × 160 RGB images |
+
+### 3.2 FedProx Algorithm
+
+```
+Algorithm 1: FedProx
+─────────────────────────────────────────────────────
+Input: μ ≥ 0, T rounds, E local epochs, learning rate η
+Initialize: global model w⁰
+
+for t = 0, 1, ..., T-1:
+    Broadcast wᵗ to all clients k
+    for each client k in parallel:
+        wₖᵗ ← wᵗ                             # receive global weights
+        for epoch e = 1..E:
+            wₖᵗ ← wₖᵗ - η · ∇[Fₖ(wₖᵗ) + (μ/2)‖wₖᵗ - wᵗ‖²]
+    wᵗ⁺¹ ← Σₖ (nₖ/n) · wₖᵗ                  # weighted average
+─────────────────────────────────────────────────────
+```
+
+### 3.3 Non-IID Partitioning
+
+Three forms of heterogeneity are simulated:
+
+| Hospital Site | Source Dataset | n | Benign% | Heterogeneity |
+|---|---|---:|---:|---|
+| Site A (BreaKHis) | `ambarish/breakhis` | 7,909 | 31.4% | Label skew + domain shift |
+| Site B (Breast Cancer) | `djaidwalid/breast-cancer-dataset` | 10,000 | 50.0% | Largest, balanced |
+| Site C (Histopath. MSI) | `zoya77/breast-cancer-msi-multimodal-image-dataset` | 1,246 | 50.0% | Smallest + multi-spectral |
+"""
     ))
 
-    # ── Dataset info table ──
-    cells.append(md_cell('### Dataset Summary\n'))
+    # ── Results ──
+    cells.append(md_cell('## 4. Experimental Results'))
     cells.append(code_cell(
-        '# Display dataset information\n'
-        'ds_info = results["dataset_info"]["datasets"]\n'
-        'print(f"{\'Dataset\':<25s} {\'Benign\':>8s} {\'Malignant\':>10s} {\'Total\':>8s}")\n'
-        'print("-" * 55)\n'
-        'total_b = total_m = 0\n'
-        'for ds in ds_info:\n'
-        '    print(f"{ds[\'name\']:<25s} {ds[\'benign\']:>8d} {ds[\'malignant\']:>10d} {ds[\'count\']:>8d}")\n'
-        '    total_b += ds["benign"]\n'
-        '    total_m += ds["malignant"]\n'
-        'print("-" * 55)\n'
-        'print(f"{\'TOTAL\':<25s} {total_b:>8d} {total_m:>10d} {total_b + total_m:>8d}")\n'
+"""exps = R['experiments']
+print(f'{\"Metric\":<14}', end='')
+for exp in exps:
+    print(f'  {exp[\"label\"]:<22}', end='')
+print()
+print('-' * 65)
+metrics = [('accuracy','Accuracy'), ('auc_roc','AUC-ROC'),
+           ('f1','F1-Score'), ('sensitivity','Sensitivity'), ('specificity','Specificity')]
+for key, label in metrics:
+    print(f'{label:<14}', end='')
+    for exp in exps:
+        v = exp['rounds'][-1]['global'].get(key, 0)
+        print(f'  {v:.4f}{\" \":>18}', end='')
+    print()
+
+fa = exps[0]['rounds'][-1]['global']
+fp = exps[1]['rounds'][-1]['global']
+print()
+print('Δ (FedProx − FedAvg):')
+for key, label in metrics:
+    delta = fp.get(key,0) - fa.get(key,0)
+    print(f'  {label:<14}: {delta:+.4f}')"""
     ))
 
-    # ── Final round comparison ──
-    cells.append(md_cell('### Final-Round Performance Comparison\n'))
+    cells.append(md_cell('### 4.1 Convergence'))
+    cells.append(code_cell("Image(filename=str(BASE / 'figures' / 'fig1_convergence.png'), width=850)"))
+
+    cells.append(md_cell('### 4.2 AUC-ROC and F1-Score'))
+    cells.append(code_cell("Image(filename=str(BASE / 'figures' / 'fig2_auc_f1.png'), width=850)"))
+
+    cells.append(md_cell('### 4.3 Per-Hospital Performance (Final Round)'))
+    cells.append(code_cell("Image(filename=str(BASE / 'figures' / 'fig3_per_hospital.png'), width=900)"))
+
+    cells.append(md_cell('### 4.4 Federated vs Standalone Comparison'))
+    cells.append(code_cell("Image(filename=str(BASE / 'figures' / 'fig6_fl_vs_standalone.png'), width=900)"))
     cells.append(code_cell(
-        '# Final round comparison\n'
-        'print(f"{\'Method\':<25s} {\'Accuracy\':>10s} {\'AUC-ROC\':>10s} {\'Loss\':>10s}")\n'
-        'print("-" * 60)\n'
-        'for exp in results["experiments"]:\n'
-        '    final = exp["rounds"][-1]["global"]\n'
-        '    print(f"{exp[\'label\']:<25s} {final[\'accuracy\']:>10.4f} "\n'
-        '          f"{final[\'auc_roc\']:>10.4f} {final[\'loss\']:>10.4f}")\n'
-        '\n'
-        '# Delta\n'
-        'b  = results["experiments"][0]["rounds"][-1]["global"]\n'
-        'fp = results["experiments"][1]["rounds"][-1]["global"]\n'
-        'print(f"\\nΔ Accuracy: {fp[\'accuracy\'] - b[\'accuracy\']:+.4f}")\n'
-        'print(f"Δ AUC-ROC:  {fp[\'auc_roc\'] - b[\'auc_roc\']:+.4f}")\n'
+"""# Standalone vs federated comparison table
+standalone = R.get('standalone', {})
+if standalone:
+    print(f'{\"Site\":<30s} {\"Standalone Acc\":>16s} {\"FedAvg Acc\":>12s} {\"FedProx Acc\":>12s}')
+    print('-' * 75)
+    h_keys = list(standalone.keys())
+    for h in h_keys:
+        sa_acc = standalone[h]['accuracy']
+        fa_acc = exps[0]['rounds'][-1]['hospitals'].get(h, {}).get('accuracy', 0)
+        fp_acc = exps[1]['rounds'][-1]['hospitals'].get(h, {}).get('accuracy', 0)
+        name = h.replace('\\n', ' ')
+        print(f'{name:<30s} {sa_acc:>16.4f} {fa_acc:>12.4f} {fp_acc:>12.4f}')"""
     ))
 
-    # ── Convergence plots ──
-    cells.append(md_cell('### Convergence Analysis\n'))
+    cells.append(md_cell('### 4.5 Local Training Loss per Hospital'))
+    cells.append(code_cell("Image(filename=str(BASE / 'figures' / 'fig7_hospital_loss.png'), width=850)"))
 
-    plot_files = [
-        ('combined_convergence.png', 'Combined Accuracy & Loss Convergence'),
-        ('convergence_accuracy.png', 'Accuracy Convergence'),
-        ('convergence_loss.png', 'Loss Convergence'),
-        ('convergence_auc.png', 'AUC-ROC Convergence'),
-        ('per_hospital_accuracy.png', 'Per-Hospital Accuracy (Final Round)'),
-        ('mu_sensitivity.png', 'μ Sensitivity Analysis'),
-        ('dataset_distribution.png', 'Dataset Class Distribution'),
-    ]
-
-    for filename, title in plot_files:
-        fig_path = BASE / 'figures' / filename
-        if fig_path.exists():
-            cells.append(md_cell(f'#### {title}\n'))
-            cells.append(code_cell(
-                f'Image(filename=str(BASE / "figures" / "{filename}"), width=700)\n'
-            ))
-
-    # ── Convergence data code ──
-    cells.append(md_cell('### Round-by-Round Data\n'))
+    # ── Round-by-round ──
+    cells.append(md_cell('### 4.6 Round-by-Round Metrics'))
     cells.append(code_cell(
-        '# Convergence data\n'
-        'for exp in results["experiments"]:\n'
-        '    print(f"\\n{exp[\'label\']}")\n'
-        '    print(f"{\'Round\':>6s} {\'Accuracy\':>10s} {\'AUC-ROC\':>10s} {\'Loss\':>10s}")\n'
-        '    print("-" * 40)\n'
-        '    for r in exp["rounds"]:\n'
-        '        g = r["global"]\n'
-        '        print(f"{r[\'round\']:>6d} {g[\'accuracy\']:>10.4f} "\n'
-        '              f"{g[\'auc_roc\']:>10.4f} {g[\'loss\']:>10.4f}")\n'
+"""for exp in exps:
+    print(f'\\n{exp[\"label\"]}')
+    print(f'{\"Round\":>6} {\"Accuracy\":>10} {\"AUC-ROC\":>10} {\"F1\":>8} {\"Sensitivity\":>12} {\"Loss\":>8}')
+    print('-' * 60)
+    for r in exp['rounds']:
+        g = r['global']
+        print(f'{r[\"round\"]:>6d} {g[\"accuracy\"]:>10.4f} {g[\"auc_roc\"]:>10.4f} '
+              f'{g[\"f1\"]:>8.4f} {g[\"sensitivity\"]:>12.4f} {g[\"loss\"]:>8.4f}')"""
     ))
 
-    # ── μ Sensitivity ──
-    cells.append(md_cell('### μ Sensitivity Analysis\n'))
+    # ── μ sensitivity ──
+    cells.append(md_cell('## 5. Hyperparameter Analysis — μ Sensitivity'))
+    cells.append(code_cell("Image(filename=str(BASE / 'figures' / 'fig4_mu_sensitivity.png'), width=800)"))
     cells.append(code_cell(
-        '# μ sweep results\n'
-        'sweep = results.get("mu_sweep", [])\n'
-        'if sweep:\n'
-        '    print(f"{\'μ\':>8s} {\'Accuracy\':>10s} {\'AUC-ROC\':>10s} {\'Loss\':>10s}")\n'
-        '    print("-" * 42)\n'
-        '    for s in sweep:\n'
-        '        print(f"{s[\'mu\']:>8.3f} {s[\'accuracy\']:>10.4f} "\n'
-        '              f"{s[\'auc_roc\']:>10.4f} {s[\'loss\']:>10.4f}")\n'
+"""sweep = R.get('mu_sweep', [])
+print(f'{\"μ\":>6} {\"Accuracy\":>10} {\"AUC-ROC\":>10} {\"F1\":>8} {\"Sensitivity\":>12} {\"Specificity\":>12}')
+print('-' * 65)
+for s in sweep:
+    print(f'{s[\"mu\"]:>6.3f} {s[\"accuracy\"]:>10.4f} {s[\"auc_roc\"]:>10.4f} '
+          f'{s[\"f1\"]:>8.4f} {s[\"sensitivity\"]:>12.4f} {s[\"specificity\"]:>12.4f}')"""
     ))
 
-    # ── Model info ──
-    cells.append(md_cell('### Model Information\n'))
-    cells.append(code_cell(
-        '# Model baseline metrics\n'
-        'mi = results["model_info"]\n'
-        'print(f"Architecture:          {mi[\'architecture\']}")\n'
-        'print(f"Total Parameters:      {mi[\'total_params\']:,}")\n'
-        'print(f"Input Size:            {mi[\'img_size\']}×{mi[\'img_size\']}")\n'
-        'print(f"Centralized Val Acc:   {mi[\'centralized_best_val_acc\']:.2%}")\n'
-        'print(f"Centralized Test Acc:  {mi[\'centralized_test_acc\']:.2%}")\n'
-        'print(f"Centralized AUC:       {mi[\'centralized_auc\']:.4f}")\n'
-        'print(f"Centralized F1:        {mi[\'centralized_f1\']:.4f}")\n'
+    # ── Summary ──
+    cells.append(md_cell('## 6. Summary and Conclusions'))
+    cells.append(code_cell("Image(filename=str(BASE / 'figures' / 'fig8_final_summary.png'), width=850)"))
+    cells.append(code_cell("Image(filename=str(BASE / 'figures' / 'fig9_overview.png'), width=900)"))
+    cells.append(md_cell(
+"""### Key Findings
+
+1. **Federation improves over standalone**: All three hospital sites benefit from
+   federated learning, with the smallest site (Site C, MSI) gaining the most —
+   demonstrating FL's ability to leverage knowledge from data-rich sites.
+
+2. **FedProx stabilizes convergence**: The proximal term $\\frac{\\mu}{2}\\|w - w^t\\|^2$
+   prevents excessive client drift caused by label skew (Site A: 31% benign) and
+   domain shift (Site C: multi-spectral imaging).
+
+3. **Optimal μ range**: The sensitivity analysis shows that μ ∈ [0.005, 0.05]
+   provides the best trade-off between regularisation and local adaptability.
+   Very large μ (e.g., 0.5) over-constrains local updates, reducing the
+   per-round learning gain.
+
+4. **Privacy preserved**: No raw histopathology images are shared between
+   hospitals at any point — only model weight updates are communicated.
+
+### Centralized Reference (from `model_code (4).ipynb`)
+
+| Metric | Centralized | FedAvg | FedProx |
+|---|---:|---:|---:|
+| Test Accuracy | 99.00% | — | — |
+| AUC-ROC | 0.9989 | — | — |
+| F1-Score | 0.9904 | — | — |
+| Sensitivity | 0.9945 | — | — |
+| Specificity | 0.9815 | — | — |
+
+The federated gap arises from: (a) communication-round limitation,
+(b) partial participation per round, and (c) non-IID data heterogeneity —
+all of which are being actively researched in the FL community.
+"""
     ))
 
     # ── References ──
     cells.append(md_cell(
-        '---\n'
-        '## References\n'
-        '\n'
-        '1. Li, T., et al. (2020). *Federated Optimization in Heterogeneous Networks.* MLSys.\n'
-        '2. McMahan, B., et al. (2017). *Communication-Efficient Learning of Deep Networks from Decentralized Data.* AISTATS.\n'
-        '3. Hou, Q., et al. (2021). *Coordinate Attention for Efficient Mobile Network Design.* CVPR.\n'
-        '4. Tan, M. & Le, Q. V. (2019). *EfficientNet: Rethinking Model Scaling for CNNs.* ICML.\n'
-        '5. Spanhol, F. A., et al. (2016). *A Dataset for Breast Cancer Histopathological Image Classification.* IEEE TBME.\n'
+"""## References
+
+1. **Li, T., Sahu, A. K., Zaheer, M., Sanjabi, M., Talwalkar, A., & Smith, V.** (2020).
+   *Federated Optimization in Heterogeneous Networks.* MLSys 2020.
+
+2. **McMahan, B., Moore, E., Ramage, D., Hampson, S., & Arcas, B. A. y.** (2017).
+   *Communication-Efficient Learning of Deep Networks from Decentralized Data.*
+   AISTATS 2017.
+
+3. **Hou, Q., Zhou, D., & Feng, J.** (2021).
+   *Coordinate Attention for Efficient Mobile Network Design.* CVPR 2021.
+
+4. **Tan, M., & Le, Q. V.** (2019).
+   *EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks.* ICML 2019.
+
+5. **Spanhol, F. A., et al.** (2016).
+   *A Dataset for Breast Cancer Histopathological Image Classification.*
+   IEEE Transactions on Biomedical Engineering, 63(7), 1455–1462.
+
+6. **Konečný, J., et al.** (2016).
+   *Federated Learning: Strategies for Improving Communication Efficiency.*
+   NIPS Workshop on Private Multi-Party Machine Learning.
+"""
     ))
 
-    # ── Build notebook JSON ──
-    notebook = {
-        'nbformat': 4,
-        'nbformat_minor': 5,
+    nb = {
+        'nbformat': 4, 'nbformat_minor': 5,
         'metadata': {
-            'kernelspec': {
-                'display_name': 'Python 3',
-                'language': 'python',
-                'name': 'python3',
-            },
-            'language_info': {
-                'name': 'python',
-                'version': '3.10.0',
-            },
+            'kernelspec': {'display_name': 'Python 3', 'language': 'python', 'name': 'python3'},
+            'language_info': {'name': 'python', 'version': '3.10.0'},
         },
         'cells': cells,
     }
 
-    out_path = BASE / 'FedProx_Research_Complete.ipynb'
-    with open(out_path, 'w') as f:
-        json.dump(notebook, f, indent=1)
-
-    print(f'✓ Notebook written → {out_path}')
-    print(f'  {len(cells)} cells')
+    out = BASE / 'FedProx_Research_Complete.ipynb'
+    with open(out, 'w') as f:
+        json.dump(nb, f, indent=1)
+    print(f'✓ Notebook → {out}  ({len(cells)} cells)')
 
 
 if __name__ == '__main__':
-    build_notebook()
+    build()
