@@ -112,7 +112,7 @@ def build_notebook():
     cells.append(code_cell(
         '# Display dataset information\n'
         'ds_info = results["dataset_info"]["datasets"]\n'
-        'print(f"{\"Dataset\":<25s} {\"Benign\":>8s} {\"Malignant\":>10s} {\"Total\":>8s}")\n'
+        'print(f"{\'Dataset\':<25s} {\'Benign\':>8s} {\'Malignant\':>10s} {\'Total\':>8s}")\n'
         'print("-" * 55)\n'
         'total_b = total_m = 0\n'
         'for ds in ds_info:\n'
@@ -120,14 +120,14 @@ def build_notebook():
         '    total_b += ds["benign"]\n'
         '    total_m += ds["malignant"]\n'
         'print("-" * 55)\n'
-        'print(f"{\"TOTAL\":<25s} {total_b:>8d} {total_m:>10d} {total_b + total_m:>8d}")\n'
+        'print(f"{\'TOTAL\':<25s} {total_b:>8d} {total_m:>10d} {total_b + total_m:>8d}")\n'
     ))
 
     # ── Final round comparison ──
     cells.append(md_cell('### Final-Round Performance Comparison\n'))
     cells.append(code_cell(
         '# Final round comparison\n'
-        'print(f"{\"Method\":<25s} {\"Accuracy\":>10s} {\"AUC-ROC\":>10s} {\"Loss\":>10s}")\n'
+        'print(f"{\'Method\':<25s} {\'Accuracy\':>10s} {\'AUC-ROC\':>10s} {\'Loss\':>10s}")\n'
         'print("-" * 60)\n'
         'for exp in results["experiments"]:\n'
         '    final = exp["rounds"][-1]["global"]\n'
@@ -168,7 +168,7 @@ def build_notebook():
         '# Convergence data\n'
         'for exp in results["experiments"]:\n'
         '    print(f"\\n{exp[\'label\']}")\n'
-        '    print(f"{\"Round\":>6s} {\"Accuracy\":>10s} {\"AUC-ROC\":>10s} {\"Loss\":>10s}")\n'
+        '    print(f"{\'Round\':>6s} {\'Accuracy\':>10s} {\'AUC-ROC\':>10s} {\'Loss\':>10s}")\n'
         '    print("-" * 40)\n'
         '    for r in exp["rounds"]:\n'
         '        g = r["global"]\n'
@@ -182,7 +182,7 @@ def build_notebook():
         '# μ sweep results\n'
         'sweep = results.get("mu_sweep", [])\n'
         'if sweep:\n'
-        '    print(f"{\"μ\":>8s} {\"Accuracy\":>10s} {\"AUC-ROC\":>10s} {\"Loss\":>10s}")\n'
+        '    print(f"{\'μ\':>8s} {\'Accuracy\':>10s} {\'AUC-ROC\':>10s} {\'Loss\':>10s}")\n'
         '    print("-" * 42)\n'
         '    for s in sweep:\n'
         '        print(f"{s[\'mu\']:>8.3f} {s[\'accuracy\']:>10.4f} "\n'
