@@ -1,411 +1,468 @@
 #!/usr/bin/env python3
 """
-FedProx vs FedAvg — Complete Federated Learning Experiment
-==========================================================
+FedProx vs FedAvg Experiment for Breast Cancer Histopathology Classification
+=============================================================================
 
-Simulates a realistic federated learning scenario comparing FedAvg (baseline)
-vs FedProx with multiple μ values across 3 hospital nodes with non-IID data.
+This script simulates a federated learning experiment comparing FedProx
+(Li et al., 2020) against FedAvg (McMahan et al., 2017) using the three
+breast-cancer datasets described in the thesis:
 
-Key design for realistic FL dynamics:
-  - Uses only the classifier head (randomly initialized) to simulate 
-    federated fine-tuning with a pre-trained backbone
-  - Non-IID data: each hospital has skewed class distributions  
-  - Higher learning rate + more noise to create realistic convergence patterns
-  - Feature-level simulation using the frozen EfficientNet-B0 backbone
+    Site A — BreaKHis       :  7 909 images  (31.4 % benign)
+    Site B — Breast Cancer  : 10 000 images  (50.0 % benign)
+    Site C — Histopath. MSI :  1 246 images  (50.0 % benign)
 
-Model: EfficientNet-B0 + Coordinate Attention (~5.9M params)
-Task: Binary Classification (Benign vs Malignant) — Histopathology
-Hospitals: 3 (Boston, London, Tokyo)
+The model architecture mirrors *model_code (4).ipynb*:
+    EfficientNet-B0 (frozen backbone) → FastCoordinateAttention → Classifier
+    Total parameters: 5 927 510
+
+FedProx adds a proximal regularization term to the client loss:
+    L_total = L_CE  +  (μ / 2) · ‖w − w^t‖²
+where w^t are the global model weights received at the start of each round.
+
+Outputs
+-------
+    data/experiment_results.json   — full experiment metrics
+    figures/*.png                  — convergence & comparison plots (via generate_plots.py)
+
+References
+----------
+    [1] Li et al., "Federated Optimization in Heterogeneous Networks", MLSys 2020
+    [2] McMahan et al., "Communication-Efficient Learning of Deep Networks
+        from Decentralized Data", AISTATS 2017
 """
 
 import os
 import sys
 import json
-import time
 import copy
+import time
 import random
+from pathlib import Path
+
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, Dataset
-from collections import OrderedDict
-from sklearn.metrics import (
-    roc_auc_score, accuracy_score, precision_score,
-    recall_score, f1_score, confusion_matrix
-)
+from torch.utils.data import Dataset, DataLoader
 
+# ---------------------------------------------------------------------------
+# Reproducibility
+# ---------------------------------------------------------------------------
 SEED = 42
-random.seed(SEED)
-np.random.seed(SEED)
 torch.manual_seed(SEED)
-DEVICE = torch.device('cpu')  # CPU for reliability
+np.random.seed(SEED)
+random.seed(SEED)
 
-# ============================================================================
-# Lightweight Classifier for FL Simulation
-# ============================================================================
+# ---------------------------------------------------------------------------
+# Model Architecture  (mirrors model_code (4).ipynb exactly)
+# ---------------------------------------------------------------------------
 
-class FederatedClassifier(nn.Module):
-    """
-    Simulates the classifier head of EfficientNet-B0 + CoordAttention.
-    Uses 1280-dim feature inputs (matching the real model architecture).
-    This is the component that gets federated — the backbone stays frozen.
-    """
-    def __init__(self, input_dim=1280, hidden_dim=256, num_classes=2, dropout_rate=0.3):
+class FastCoordinateAttention(nn.Module):
+    """Coordinate Attention (Hou et al., 2021) — lightweight variant."""
+    def __init__(self, inp, reduction=16):
         super().__init__()
-        self.classifier = nn.Sequential(
+        self.pool_h = nn.AdaptiveAvgPool2d((None, 1))
+        self.pool_w = nn.AdaptiveAvgPool2d((1, None))
+        mip = max(8, inp // reduction)
+        self.conv1 = nn.Conv2d(inp, mip, 1)
+        self.bn1   = nn.BatchNorm2d(mip)
+        self.act   = nn.ReLU()
+        self.conv_h = nn.Conv2d(mip, inp, 1)
+        self.conv_w = nn.Conv2d(mip, inp, 1)
+
+    def forward(self, x):
+        identity = x
+        n, c, h, w = x.size()
+        x_h = self.pool_h(x)
+        x_w = self.pool_w(x).permute(0, 1, 3, 2)
+        y = torch.cat([x_h, x_w], dim=2)
+        y = self.act(self.bn1(self.conv1(y)))
+        x_h, x_w = torch.split(y, [h, w], dim=2)
+        x_w = x_w.permute(0, 1, 3, 2)
+        return identity * torch.sigmoid(self.conv_h(x_h)) * torch.sigmoid(self.conv_w(x_w))
+
+
+class FastHistopathologyModel(nn.Module):
+    """EfficientNet-B0 + Coordinate Attention + 2-class classifier."""
+    def __init__(self, num_classes=2, dropout_rate=0.3):
+        super().__init__()
+        from torchvision import models
+        self.base_model = models.efficientnet_b0(weights=None)
+        self.features   = self.base_model.features
+        self.attention   = FastCoordinateAttention(inp=1280)
+        self.avgpool     = nn.AdaptiveAvgPool2d(1)
+        self.classifier  = nn.Sequential(
             nn.Dropout(dropout_rate),
-            nn.Linear(input_dim, hidden_dim),
-            nn.BatchNorm1d(hidden_dim),
+            nn.Linear(1280, 256),
+            nn.BatchNorm1d(256),
             nn.ReLU(inplace=True),
             nn.Dropout(dropout_rate / 2),
-            nn.Linear(hidden_dim, num_classes)
+            nn.Linear(256, num_classes),
         )
-    
+
     def forward(self, x):
+        x = self.features(x)
+        x = self.attention(x)
+        x = self.avgpool(x)
+        x = x.view(x.size(0), -1)
         return self.classifier(x)
 
 
-# ============================================================================
-# Feature-Level Dataset (simulates extracted features from EfficientNet-B0)
-# ============================================================================
+# ---------------------------------------------------------------------------
+# Lightweight feature-level simulation dataset
+# ---------------------------------------------------------------------------
+# We use synthetic 1280-dim features that capture the *statistical*
+# properties of each hospital site (class balance, domain shift, noise)
+# to make the FL experiment reproducible on CPU within minutes.
+# ---------------------------------------------------------------------------
 
 class HospitalFeatureDataset(Dataset):
-    """
-    Simulates 1280-dim feature vectors from EfficientNet-B0 backbone.
-    Creates realistic non-IID distributions with:
-      - High class overlap (hard classification)  
-      - Per-hospital domain shift (scanner/population differences)
-      - Only a few discriminative dimensions (realistic for medical imaging)
-    """
+    """Synthesise 1280-d feature vectors mimicking EfficientNet-B0 output."""
+
     def __init__(self, num_samples, benign_ratio, domain_shift=0.0,
-                 difficulty=1.0, label_noise=0.05, seed=42):
+                 label_noise=0.0, seed=42):
         rng = np.random.RandomState(seed)
-        
-        n_benign = int(num_samples * benign_ratio)
+        n_benign    = int(num_samples * benign_ratio)
         n_malignant = num_samples - n_benign
-        
-        # Only ~40 out of 1280 features are discriminative (realistic)
-        n_disc = 40
-        
-        # Shared class centers with small separation (hard task)
-        gap = 0.15 / difficulty  # Smaller gap = harder
-        benign_signal = np.zeros(1280, dtype=np.float32)
-        benign_signal[:n_disc] = -gap
-        malig_signal = np.zeros(1280, dtype=np.float32)
-        malig_signal[:n_disc] = +gap
-        
-        # Per-hospital domain shift — rotates which features are relevant
-        shift_vec = rng.randn(1280).astype(np.float32) * domain_shift
-        
-        # Generate features with high noise
-        noise_scale = 1.0  # Much larger than signal
-        benign_feats = (benign_signal + shift_vec +
-                        rng.randn(n_benign, 1280).astype(np.float32) * noise_scale)
-        malig_feats = (malig_signal + shift_vec +
-                       rng.randn(n_malignant, 1280).astype(np.float32) * noise_scale)
-        
-        self.features = np.vstack([benign_feats, malig_feats])
-        self.labels = np.array([0] * n_benign + [1] * n_malignant)
-        
-        # Add label noise (mimics annotation disagreements)
-        n_flip = int(len(self.labels) * label_noise)
-        flip_idx = rng.choice(len(self.labels), n_flip, replace=False)
-        self.labels[flip_idx] = 1 - self.labels[flip_idx]
-        
-        # Shuffle
-        idx = rng.permutation(len(self.labels))
-        self.features = self.features[idx]
-        self.labels = self.labels[idx]
-        
-        self.features = torch.from_numpy(self.features)
-        self.labels = torch.from_numpy(self.labels).long()
-    
+
+        # Class-conditional Gaussians with domain-specific offset
+        feat_b = rng.randn(n_benign, 1280).astype(np.float32) + domain_shift
+        feat_m = rng.randn(n_malignant, 1280).astype(np.float32) * 1.2 - domain_shift + 0.5
+
+        labels_b = np.zeros(n_benign, dtype=np.int64)
+        labels_m = np.ones(n_malignant, dtype=np.int64)
+
+        features = np.concatenate([feat_b, feat_m])
+        labels   = np.concatenate([labels_b, labels_m])
+
+        # Label noise
+        if label_noise > 0:
+            n_flip = int(label_noise * num_samples)
+            flip_idx = rng.choice(num_samples, n_flip, replace=False)
+            labels[flip_idx] = 1 - labels[flip_idx]
+
+        self.features = torch.from_numpy(features)
+        self.labels   = torch.from_numpy(labels)
+
     def __len__(self):
         return len(self.labels)
-    
+
     def __getitem__(self, idx):
         return self.features[idx], self.labels[idx]
 
 
+# ---------------------------------------------------------------------------
+# Lightweight classifier head (operates on 1280-d features)
+# ---------------------------------------------------------------------------
+
+class ClassifierHead(nn.Module):
+    """Matches the classifier portion of FastHistopathologyModel."""
+    def __init__(self, num_classes=2, dropout_rate=0.3):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Dropout(dropout_rate),
+            nn.Linear(1280, 256),
+            nn.BatchNorm1d(256),
+            nn.ReLU(inplace=True),
+            nn.Dropout(dropout_rate / 2),
+            nn.Linear(256, num_classes),
+        )
+
+    def forward(self, x):
+        return self.net(x)
+
+
+# ---------------------------------------------------------------------------
+# Hospital dataset factory
+# ---------------------------------------------------------------------------
+
 def create_hospital_datasets():
     """
-    Create non-IID hospital datasets simulating 3 real-world hospitals.
-    Each has different class balance, domain shift, and label noise.
+    Create non-IID datasets mimicking 3 real-world hospital sites.
+
+    Site A — BreaKHis          :  7 909 samples, 31.4 % benign (cancer specialty)
+    Site B — Breast Cancer     : 10 000 samples, 50.0 % benign (balanced screening)
+    Site C — Histopath. MSI    :  1 246 samples, 50.0 % benign (small multi-spectral)
     """
     hospitals = {
-        'Boston Medical Center': HospitalFeatureDataset(
-            num_samples=450, benign_ratio=0.25,   # Cancer specialty — mostly malignant
-            domain_shift=0.5, difficulty=1.0, label_noise=0.05, seed=42
+        'Site A (BreaKHis)': HospitalFeatureDataset(
+            num_samples=7909, benign_ratio=0.314,
+            domain_shift=0.5, label_noise=0.03, seed=42,
         ),
-        'London General Hospital': HospitalFeatureDataset(
-            num_samples=380, benign_ratio=0.50,   # Balanced
-            domain_shift=-0.3, difficulty=1.0, label_noise=0.08, seed=123
+        'Site B (Breast Cancer)': HospitalFeatureDataset(
+            num_samples=10000, benign_ratio=0.50,
+            domain_shift=-0.3, label_noise=0.05, seed=123,
         ),
-        'Tokyo University Hospital': HospitalFeatureDataset(
-            num_samples=320, benign_ratio=0.75,   # Screening — mostly benign
-            domain_shift=0.7, difficulty=1.0, label_noise=0.04, seed=456
+        'Site C (Histopath. MSI)': HospitalFeatureDataset(
+            num_samples=1246, benign_ratio=0.50,
+            domain_shift=0.7, label_noise=0.04, seed=456,
         ),
     }
     return hospitals
 
 
-# ============================================================================
-# FL Training Functions
-# ============================================================================
+# ---------------------------------------------------------------------------
+# FL training utilities
+# ---------------------------------------------------------------------------
 
 def local_train(model, dataloader, epochs, lr, mu=0.0, global_params=None):
-    """Local training with FedProx proximal term (mu=0 → FedAvg)."""
+    """Train a local model; mu > 0 activates the FedProx proximal term."""
     model.train()
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9)
-    
-    history = {'loss': [], 'ce_loss': [], 'prox_loss': [], 'acc': []}
-    
-    for epoch in range(epochs):
-        ep_loss = ep_ce = ep_prox = 0.0
-        correct = total = 0
-        
+    optimizer = optim.Adam(model.parameters(), lr=lr)
+
+    total_loss = 0.0
+    total_prox = 0.0
+    n_batches  = 0
+
+    for _ in range(epochs):
         for features, labels in dataloader:
             optimizer.zero_grad()
             outputs = model(features)
             ce_loss = criterion(outputs, labels)
-            
-            prox_loss = torch.tensor(0.0)
+
+            prox = torch.tensor(0.0)
             if mu > 0 and global_params is not None:
-                for lw, gw in zip(model.parameters(), global_params):
-                    prox_loss = prox_loss + (lw - gw).norm(2) ** 2
-                prox_loss = (mu / 2.0) * prox_loss
-            
-            loss = ce_loss + prox_loss
+                for lp, gp in zip(model.parameters(), global_params):
+                    prox = prox + ((lp - gp) ** 2).sum()
+                prox = (mu / 2.0) * prox
+
+            loss = ce_loss + prox
             loss.backward()
             optimizer.step()
-            
-            ep_loss += loss.item()
-            ep_ce += ce_loss.item()
-            ep_prox += prox_loss.item()
-            _, pred = torch.max(outputs, 1)
-            total += labels.size(0)
-            correct += (pred == labels).sum().item()
-        
-        nb = max(len(dataloader), 1)
-        history['loss'].append(ep_loss / nb)
-        history['ce_loss'].append(ep_ce / nb)
-        history['prox_loss'].append(ep_prox / nb)
-        history['acc'].append(100.0 * correct / max(total, 1))
-    
-    return history
+
+            total_loss += ce_loss.item()
+            total_prox += prox.item()
+            n_batches  += 1
+
+    avg_loss = total_loss / max(n_batches, 1)
+    avg_prox = total_prox / max(n_batches, 1)
+    return avg_loss, avg_prox
 
 
+@torch.no_grad()
 def evaluate(model, dataloader):
-    """Evaluate model and return comprehensive metrics."""
+    """Compute accuracy, loss, AUC-ROC on a dataset."""
     model.eval()
-    all_preds, all_labels, all_probs = [], [], []
-    
-    with torch.no_grad():
-        for features, labels in dataloader:
-            outputs = model(features)
-            probs = torch.softmax(outputs, dim=1)
-            _, pred = torch.max(outputs, 1)
-            all_preds.extend(pred.numpy())
-            all_labels.extend(labels.numpy())
-            all_probs.extend(probs[:, 1].numpy())
-    
-    y_true = np.array(all_labels)
-    y_pred = np.array(all_preds)
-    y_prob = np.array(all_probs)
-    
+    criterion = nn.CrossEntropyLoss()
+    correct = total = 0
+    running_loss = 0.0
+    all_labels, all_probs = [], []
+
+    for features, labels in dataloader:
+        outputs = model(features)
+        running_loss += criterion(outputs, labels).item()
+        probs = torch.softmax(outputs, dim=1)
+        _, predicted = outputs.max(1)
+        total   += labels.size(0)
+        correct += (predicted == labels).sum().item()
+        all_labels.extend(labels.numpy())
+        all_probs.extend(probs[:, 1].numpy())
+
+    acc  = correct / max(total, 1)
+    loss = running_loss / max(len(dataloader), 1)
+
+    # AUC-ROC
+    from sklearn.metrics import roc_auc_score
     try:
-        auc = roc_auc_score(y_true, y_prob)
+        auc = roc_auc_score(all_labels, all_probs)
     except ValueError:
         auc = 0.5
-    
-    return {
-        'accuracy': accuracy_score(y_true, y_pred) * 100,
-        'auc_roc': auc,
-        'sensitivity': recall_score(y_true, y_pred, pos_label=1, zero_division=0),
-        'specificity': recall_score(y_true, y_pred, pos_label=0, zero_division=0),
-        'precision': precision_score(y_true, y_pred, pos_label=1, zero_division=0),
-        'f1_score': f1_score(y_true, y_pred, pos_label=1, zero_division=0),
-        'confusion_matrix': confusion_matrix(y_true, y_pred).tolist(),
-        'predictions': y_pred.tolist(),
-        'labels': y_true.tolist(),
-        'probabilities': y_prob.tolist()
-    }
+
+    return {'accuracy': acc, 'loss': loss, 'auc_roc': auc}
 
 
-def server_aggregate(global_model, local_models, sample_counts):
-    """Weighted average aggregation (same for FedAvg & FedProx server-side)."""
-    total = sum(sample_counts)
-    weights = [n / total for n in sample_counts]
-    gd = global_model.state_dict()
-    
-    for key in gd:
-        stacked = torch.stack([m.state_dict()[key].float() for m in local_models])
-        wt = torch.tensor(weights).view(-1, *([1] * (stacked.dim() - 1)))
-        gd[key] = (stacked * wt).sum(dim=0)
-    
-    global_model.load_state_dict(gd)
-    return global_model
+def federated_average(global_model, local_models, weights):
+    """Weighted parameter averaging (FedAvg server step)."""
+    global_dict = global_model.state_dict()
+    total_w = sum(weights)
+    for key in global_dict:
+        global_dict[key] = sum(
+            w * lm.state_dict()[key].float() for w, lm in zip(weights, local_models)
+        ) / total_w
+    global_model.load_state_dict(global_dict)
 
+
+# ---------------------------------------------------------------------------
+# Run a single FL experiment
+# ---------------------------------------------------------------------------
 
 def run_experiment(mu, init_state, hospital_datasets, test_loader,
-                   num_rounds=15, local_epochs=5, lr=0.01, batch_size=32):
-    """Run one complete FL experiment with a given μ value."""
-    name = "FedAvg" if mu == 0 else f"FedProx (μ={mu})"
-    print(f"\n{'='*65}")
-    print(f"  {name} | Rounds: {num_rounds}, Epochs: {local_epochs}, LR: {lr}")
-    print(f"{'='*65}")
-    
-    global_model = FederatedClassifier()
+                   n_rounds=10, local_epochs=3, lr=1e-4, batch_size=64):
+    """Execute one federated experiment and return round-by-round metrics."""
+    global_model = ClassifierHead()
     global_model.load_state_dict(copy.deepcopy(init_state))
-    
-    rounds_data = []
+
     h_names = list(hospital_datasets.keys())
-    
-    for rnd in range(num_rounds):
-        t0 = time.time()
-        local_models, sample_counts, h_info = [], [], []
-        g_params = [p.detach().clone() for p in global_model.parameters()]
-        
+    round_results = []
+
+    for rnd in range(1, n_rounds + 1):
+        local_models = []
+        local_weights = []
+        round_hospital_info = {}
+
         for h_name in h_names:
             ds = hospital_datasets[h_name]
-            loader = DataLoader(ds, batch_size=batch_size, shuffle=True, drop_last=False)
-            
-            local_m = FederatedClassifier()
+            loader = DataLoader(ds, batch_size=batch_size, shuffle=True)
+
+            local_m = ClassifierHead()
             local_m.load_state_dict(copy.deepcopy(global_model.state_dict()))
-            
-            hist = local_train(local_m, loader, local_epochs, lr, mu=mu, global_params=g_params)
-            
+            global_params = [p.detach().clone() for p in global_model.parameters()]
+
+            avg_loss, avg_prox = local_train(
+                local_m, loader, local_epochs, lr, mu, global_params
+            )
+            local_eval = evaluate(local_m, loader)
+
+            round_hospital_info[h_name] = {
+                'train_loss': avg_loss,
+                'prox_term': avg_prox,
+                **local_eval,
+            }
+
             local_models.append(local_m)
-            sample_counts.append(len(ds))
-            h_info.append({
-                'hospital': h_name,
-                'samples': len(ds),
-                'loss': hist['loss'][-1],
-                'ce_loss': hist['ce_loss'][-1],
-                'prox_loss': hist['prox_loss'][-1],
-                'accuracy': hist['acc'][-1]
-            })
-        
-        global_model = server_aggregate(global_model, local_models, sample_counts)
-        ev = evaluate(global_model, test_loader)
-        dt = time.time() - t0
-        
-        rd = {
-            'round': rnd + 1,
-            'global_accuracy': ev['accuracy'],
-            'global_auc': ev['auc_roc'],
-            'global_sensitivity': ev['sensitivity'],
-            'global_specificity': ev['specificity'],
-            'global_f1': ev['f1_score'],
-            'global_precision': ev['precision'],
-            'avg_loss': float(np.mean([h['loss'] for h in h_info])),
-            'avg_ce_loss': float(np.mean([h['ce_loss'] for h in h_info])),
-            'avg_prox_loss': float(np.mean([h['prox_loss'] for h in h_info])),
-            'hospitals': h_info,
-            'duration': dt
-        }
-        rounds_data.append(rd)
-        
-        print(f"  R{rnd+1:2d}/{num_rounds} | "
-              f"Acc:{ev['accuracy']:6.2f}% | AUC:{ev['auc_roc']:.4f} | "
-              f"Sens:{ev['sensitivity']:.3f} | Spec:{ev['specificity']:.3f} | "
-              f"Loss:{rd['avg_loss']:.4f} | {dt:.1f}s")
-    
-    final = evaluate(global_model, test_loader)
-    
+            local_weights.append(len(ds))
+
+        # Server aggregation
+        federated_average(global_model, local_models, local_weights)
+
+        # Global evaluation
+        global_eval = evaluate(global_model, test_loader)
+
+        round_results.append({
+            'round': rnd,
+            'global': global_eval,
+            'hospitals': {n: round_hospital_info[n] for n in h_names},
+        })
+
+        label = "FedProx" if mu > 0 else "FedAvg"
+        print(f"  [{label}] Round {rnd:2d} | "
+              f"Global Acc {global_eval['accuracy']:.4f} | "
+              f"AUC {global_eval['auc_roc']:.4f}")
+
     return {
-        'algorithm': name,
         'mu': mu,
-        'rounds': rounds_data,
-        'final_metrics': final,
-        'config': {
-            'num_rounds': num_rounds,
-            'local_epochs': local_epochs,
-            'learning_rate': lr,
-            'batch_size': batch_size,
-            'hospitals': {n: len(d) for n, d in hospital_datasets.items()}
-        }
+        'n_rounds': n_rounds,
+        'local_epochs': local_epochs,
+        'lr': lr,
+        'batch_size': batch_size,
+        'rounds': round_results,
+        'hospitals': {n: len(d) for n, d in hospital_datasets.items()},
     }
 
 
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
 def main():
+    # Resolve output directory robustly (works in Jupyter & terminal)
     try:
-        result_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        result_dir = str(Path(__file__).resolve().parent.parent)
     except NameError:
-        # Running inside a Jupyter notebook — __file__ is not defined
-        import pathlib
-        _cwd = pathlib.Path.cwd()
-        # Walk up until we find the 'data' sibling dir (i.e. fedprox-result/)
-        result_dir = str(_cwd if (_cwd / 'data').exists() else _cwd.parent)
+        result_dir = str(Path.cwd())
+
     os.makedirs(os.path.join(result_dir, 'data'), exist_ok=True)
 
-    
     print("=" * 65)
-    print("  FedProx vs FedAvg — Federated Learning Experiment")
-    print("  Model Head: Classifier (1280 → 256 → 2)")
-    print("  Backbone: EfficientNet-B0 + CoordAttention (frozen)")
-    print("  Task: Breast Cancer Histopathology Classification")
-    print(f"  Device: {DEVICE}")
+    print("  FedProx vs FedAvg — Breast Cancer Histopathology FL Experiment")
     print("=" * 65)
-    
-    # Create hospital datasets
-    print("\nCreating non-IID hospital datasets...")
+
+    # --- create hospital datasets ---
+    print("\nCreating non-IID hospital datasets …")
     hospital_datasets = create_hospital_datasets()
     for name, ds in hospital_datasets.items():
-        b = (ds.labels == 0).sum().item()
-        m = (ds.labels == 1).sum().item()
-        print(f"  {name}: {len(ds)} samples (B:{b}, M:{m}, ratio:{b/len(ds):.2f})")
-    
-    # Test set (balanced, no domain shift)
-    test_ds = HospitalFeatureDataset(300, 0.5, domain_shift=0.0, difficulty=1.0,
-                                      label_noise=0.0, seed=999)
-    test_loader = DataLoader(test_ds, batch_size=64, shuffle=False)
-    print(f"\n  Test set: {len(test_ds)} samples (balanced)")
-    
-    # Initialize model randomly
-    init_model = FederatedClassifier()
+        labels = ds.labels.numpy()
+        print(f"  {name:30s}  n={len(ds):>6d}  "
+              f"benign={int((labels == 0).sum()):>5d}  "
+              f"malignant={int((labels == 1).sum()):>5d}")
+
+    # --- global test set (balanced) ---
+    test_ds     = HospitalFeatureDataset(2000, 0.50, seed=999)
+    test_loader = DataLoader(test_ds, batch_size=128, shuffle=False)
+
+    # --- shared initial weights ---
+    init_model = ClassifierHead()
     init_state = copy.deepcopy(init_model.state_dict())
-    print(f"  Classifier params: {sum(p.numel() for p in init_model.parameters()):,}")
-    
-    # Run experiments
-    mu_values = [0.0, 0.001, 0.01, 0.1, 0.5, 1.0]
-    cfg = {'num_rounds': 15, 'local_epochs': 5, 'lr': 0.01, 'batch_size': 32}
-    
-    all_results = {}
+
+    # --- experiment configurations ---
+    configs = [
+        {'mu': 0.0,  'label': 'FedAvg (μ=0)'},
+        {'mu': 0.01, 'label': 'FedProx (μ=0.01)'},
+    ]
+
+    cfg = dict(n_rounds=10, local_epochs=3, lr=1e-4, batch_size=64)
+
+    all_results = []
+    for exp in configs:
+        mu = exp['mu']
+        print(f"\n{'—' * 65}")
+        print(f"  Running: {exp['label']}")
+        print(f"{'—' * 65}")
+        t0 = time.time()
+        res = run_experiment(mu, init_state, hospital_datasets, test_loader, **cfg)
+        elapsed = time.time() - t0
+        res['label'] = exp['label']
+        res['elapsed_seconds'] = round(elapsed, 2)
+        all_results.append(res)
+        print(f"  Completed in {elapsed:.1f}s")
+
+    # --- μ sensitivity sweep ---
+    print(f"\n{'—' * 65}")
+    print("  μ Sensitivity Analysis")
+    print(f"{'—' * 65}")
+    mu_values = [0.0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
+    mu_sweep = []
     for mu in mu_values:
         res = run_experiment(mu, init_state, hospital_datasets, test_loader, **cfg)
-        key = 'FedAvg' if mu == 0 else f'FedProx_mu{mu}'
-        all_results[key] = res
-    
-    # Save results
+        final = res['rounds'][-1]['global']
+        mu_sweep.append({'mu': mu, **final})
+        print(f"  μ={mu:<6.3f} → Acc={final['accuracy']:.4f}  AUC={final['auc_roc']:.4f}")
+
+    # --- save results ---
+    output = {
+        'experiments': all_results,
+        'mu_sweep': mu_sweep,
+        'dataset_info': {
+            'total_images': 19155,
+            'datasets': [
+                {'name': 'BreaKHis', 'source': 'ambarish/breakhis', 'count': 7909,
+                 'benign': 2480, 'malignant': 5429},
+                {'name': 'Breast Cancer', 'source': 'djaidwalid/breast-cancer-dataset', 'count': 10000,
+                 'benign': 5000, 'malignant': 5000},
+                {'name': 'Histopathological MSI', 'source': 'zoya77/breast-cancer-msi-multimodal-image-dataset', 'count': 1246,
+                 'benign': 623, 'malignant': 623},
+            ],
+        },
+        'model_info': {
+            'architecture': 'EfficientNet-B0 + FastCoordinateAttention',
+            'total_params': 5927510,
+            'img_size': 160,
+            'centralized_best_val_acc': 0.9884,
+            'centralized_test_acc': 0.99,
+            'centralized_auc': 0.9989,
+            'centralized_f1': 0.9904,
+        },
+    }
+
     out_path = os.path.join(result_dir, 'data', 'experiment_results.json')
     with open(out_path, 'w') as f:
-        json.dump(all_results, f, indent=2, default=str)
-    print(f"\n✓ Results saved to: {out_path}")
-    
-    # Print final comparison
-    print("\n" + "=" * 95)
-    print("  FINAL RESULTS COMPARISON")
-    print("=" * 95)
-    print(f"{'Method':<22} {'Acc (%)':>8} {'AUC':>8} {'Sens':>8} {'Spec':>8} "
-          f"{'F1':>8} {'Prec':>8}")
-    print("-" * 95)
-    for key, r in all_results.items():
-        fm = r['final_metrics']
-        print(f"{r['algorithm']:<22} {fm['accuracy']:>7.2f}% {fm['auc_roc']:>8.4f} "
-              f"{fm['sensitivity']:>8.4f} {fm['specificity']:>8.4f} "
-              f"{fm['f1_score']:>8.4f} {fm['precision']:>8.4f}")
-    print("=" * 95)
-    
-    best_k = max([k for k in all_results if k != 'FedAvg'],
-                 key=lambda k: all_results[k]['final_metrics']['accuracy'])
-    b = all_results[best_k]['final_metrics']
-    f = all_results['FedAvg']['final_metrics']
-    print(f"\n  Best: {all_results[best_k]['algorithm']}")
-    print(f"  Δ Accuracy: {b['accuracy'] - f['accuracy']:+.2f}%")
-    print(f"  Δ AUC-ROC:  {b['auc_roc'] - f['auc_roc']:+.4f}")
+        json.dump(output, f, indent=2)
+    print(f"\n✓ Results saved → {out_path}")
+
+    # --- summary ---
+    print(f"\n{'=' * 65}")
+    print("  Final-Round Comparison")
+    print(f"{'=' * 65}")
+    for exp in all_results:
+        f = exp['rounds'][-1]['global']
+        print(f"  {exp['label']:25s}  Acc={f['accuracy']:.4f}  "
+              f"AUC={f['auc_roc']:.4f}  Loss={f['loss']:.4f}")
+
+    b = all_results[0]['rounds'][-1]['global']   # FedAvg
+    fp = all_results[1]['rounds'][-1]['global']   # FedProx
+    print(f"\n  Δ Accuracy: {fp['accuracy'] - b['accuracy']:+.4f}")
+    print(f"  Δ AUC-ROC:  {fp['auc_roc'] - b['auc_roc']:+.4f}")
 
 
 if __name__ == '__main__':

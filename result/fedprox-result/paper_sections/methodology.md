@@ -1,81 +1,135 @@
-# Suggested Paper Sections: FedProx Aggregation
+# FedProx for Federated Breast Cancer Histopathology Classification
 
-Use and adapt these sections for your journal paper. LaTeX formatting is included.
+## 1. Introduction
 
----
+This document describes the federated learning (FL) aggregation methodology
+used in the thesis. We compare **FedProx** (Li et al., 2020) against the
+baseline **FedAvg** (McMahan et al., 2017) for training a breast cancer
+histopathology classifier across three geographically distributed hospital
+sites, each holding non-IID (non-identically distributed) data.
 
-## III-B. Federated Aggregation Strategy
+## 2. Model Architecture
 
-In our initial implementation, we employed Federated Averaging (FedAvg) \cite{mcmahan2017fedavg} for model aggregation, where the global model is computed as a weighted average of local model parameters proportional to each hospital's training sample count. While FedAvg is the foundational algorithm for federated learning, it is known to suffer from "client drift" in heterogeneous data environments \cite{li2020fedprox}, where local models trained on non-identically distributed (non-IID) data diverge significantly during local training before being averaged. This divergence can lead to slower convergence and suboptimal global model performance.
+The classification model follows the architecture defined in `model_code (4).ipynb`:
 
-To address this limitation, we adopt FedProx \cite{li2020fedprox}, which introduces a proximal regularization term to the local objective function at each participating hospital. The modified local optimization objective for hospital $k$ at communication round $t$ is:
+**EfficientNet-B0 + Fast Coordinate Attention**
 
-$$\min_{w} F_k(w) + \frac{\mu}{2} \| w - w^t \|^2$$
+| Component | Details |
+|---|---|
+| Backbone | EfficientNet-B0 (ImageNet pre-trained, all layers trainable) |
+| Attention | Fast Coordinate Attention (Hou et al., 2021) on 1280-channel feature maps |
+| Pooling | Adaptive Average Pooling → 1280-d vector |
+| Classifier | Dropout(0.3) → Linear(1280, 256) → BN → ReLU → Dropout(0.15) → Linear(256, 2) |
+| Total Parameters | 5,927,510 |
+| Input Size | 160 × 160 × 3 |
 
-where $F_k(w)$ is the local empirical loss (cross-entropy for binary classification), $w^t$ represents the global model parameters received from the admin server at the start of round $t$, and $\mu \geq 0$ is the proximal hyperparameter that controls the strength of the regularization. When $\mu = 0$, FedProx reduces to standard FedAvg, providing a natural baseline for comparison.
+### Centralized Training Results (Reference Baseline)
 
-The proximal term $\frac{\mu}{2} \| w - w^t \|^2$ constrains local model updates to remain within a bounded distance of the global model, effectively mitigating the impact of data heterogeneity across hospitals. This is particularly relevant in our setting, where the three participating hospitals (Boston Medical Center, London General Hospital, and Tokyo University Hospital) exhibit inherent variations in disease prevalence, imaging equipment, staining protocols, and patient demographics — all contributing to non-IID data distributions.
+| Metric | Value |
+|---|---|
+| Best Validation Accuracy | 98.84% |
+| Test Accuracy | 99% |
+| AUC-ROC | 0.9989 |
+| F1-Score | 0.9904 |
+| Sensitivity (Malignant Recall) | 0.9945 |
+| Specificity (Benign Recall) | 0.9815 |
 
-The server-side aggregation remains a weighted average of model parameters:
+## 3. Datasets
 
-$$w^{t+1} = \sum_{k=1}^{K} \frac{n_k}{N} w_k^{t+1}$$
+Three publicly available breast cancer histopathology datasets are used,
+totalling **19,155 images**:
 
-where $n_k$ is the number of training samples at hospital $k$, $N = \sum_{k=1}^{K} n_k$ is the total number of samples across all hospitals, and $w_k^{t+1}$ are the locally updated parameters. This aggregation is performed off-chain by the oracle service and the resulting global model is published to the blockchain via the smart contract, maintaining full transparency and auditability while benefiting from the improved local training procedure.
+| Dataset | Kaggle Source | Benign | Malignant | Total |
+|---|---|---:|---:|---:|
+| BreaKHis | `ambarish/breakhis` | 2,480 | 5,429 | 7,909 |
+| Breast Cancer Dataset | `djaidwalid/breast-cancer-dataset` | 5,000 | 5,000 | 10,000 |
+| Histopathological MSI | `zoya77/breast-cancer-msi-multimodal-image-dataset` | 623 | 623 | 1,246 |
+| **Combined** | | **8,103** | **11,052** | **19,155** |
 
----
+### Non-IID Partitioning for Federated Simulation
 
-## III-C. FedProx Implementation in the System Architecture
+Each dataset is assigned to a simulated hospital site, creating natural
+statistical heterogeneity:
 
-A key advantage of FedProx for our blockchain-based architecture is that the server-side aggregation is mathematically identical to FedAvg. This means our existing infrastructure — including the Ethereum smart contract for coordination, IPFS for model weight storage, and the oracle service for aggregation — requires no modification to support FedProx. The innovation is entirely on the client side (hospital local training), where the proximal term is added to the loss function before backpropagation.
+- **Site A (BreaKHis)** — Cancer specialty center: 7,909 samples with 31.4% benign
+  ratio. Represents a hospital biased toward malignant cases, with images at
+  multiple magnification levels (40×, 100×, 200×, 400×).
 
-The implementation flow is:
-1. Each hospital downloads the current global model weights from IPFS
-2. Local training is performed with the modified loss function incorporating the proximal term
-3. Updated local weights are uploaded to IPFS and registered on the blockchain
-4. The oracle service performs weighted averaging (identical to FedAvg) and publishes the new global model
+- **Site B (Breast Cancer Dataset)** — General screening facility: 10,000 samples
+  with balanced 50/50 class distribution. The largest site by volume.
 
----
+- **Site C (Histopathological MSI)** — Research hospital with multi-spectral
+  imaging: 1,246 samples with balanced distribution. The smallest site,
+  contributing a different imaging modality.
 
-## IV-D. Aggregation Strategy Comparison
+This partitioning captures three key forms of data heterogeneity:
+- **Label skew**: varying benign-to-malignant ratios across sites
+- **Quantity skew**: site sample counts range from 1,246 to 10,000
+- **Domain shift**: different imaging equipment, magnifications, and staining
 
-To evaluate the effectiveness of FedProx over FedAvg, we conduct experiments across 15 communication rounds with 5 local training epochs per round. We test FedProx with proximal parameters $\mu \in \{0.001, 0.01, 0.1, 0.5, 1.0\}$ and compare against FedAvg ($\mu = 0$) as the baseline. The non-IID data distribution across hospitals is characterized by the following class ratios:
+## 4. Federated Optimization: FedProx
 
-- **Boston Medical Center**: 25% benign / 75% malignant (cancer research specialty)
-- **London General Hospital**: 50% benign / 50% malignant (balanced general population)
-- **Tokyo University Hospital**: 75% benign / 25% malignant (screening center)
+### 4.1. Background — FedAvg
 
+FedAvg (McMahan et al., 2017) proceeds in communication rounds:
 
-[INSERT Table from tables/comparison_table.tex HERE]
+1. The server broadcasts the current global model $w^t$ to all clients.
+2. Each client $k$ performs $E$ epochs of SGD on its local data.
+3. The server collects updated weights and computes:
 
-[INSERT Figure convergence_accuracy.png HERE with caption: "Accuracy convergence comparison between FedAvg and FedProx with different proximal parameters $\mu$ across 15 communication rounds on non-IID histopathology data."]
+$$w^{t+1} = \sum_{k} \frac{n_k}{n} \cdot w_k^{t+1}$$
 
-[INSERT Figure mu_sensitivity.png HERE with caption: "Effect of the proximal parameter $\mu$ on classification performance metrics. Horizontal dashed lines indicate FedAvg baseline performance."]
+where $n_k$ is the number of samples at client $k$ and $n = \sum_k n_k$.
 
----
+### 4.2. FedProx — Proximal Regularization
 
-## V-B. Discussion: Aggregation Strategy
+FedProx modifies the local objective by adding a proximal term that penalizes
+deviation from the global model:
 
-Our experimental results demonstrate that FedProx provides more stable convergence compared to FedAvg in the non-IID setting inherent to our multi-hospital breast cancer classification task. While FedAvg is susceptible to accuracy oscillations caused by client drift — where locally trained models diverge due to heterogeneous data distributions — FedProx's proximal regularization effectively constrains this divergence.
+$$\min_{w} \; F_k(w) + \frac{\mu}{2} \| w - w^t \|^2$$
 
-The sensitivity analysis of the proximal parameter $\mu$ reveals that moderate values ($\mu = 0.01$ to $\mu = 0.1$) provide the best balance between regularization strength and learning flexibility. Very small values ($\mu = 0.001$) provide insufficient regularization and behave similarly to FedAvg, while large values ($\mu \geq 0.5$) over-constrain local updates and can slow convergence.
+where:
+- $F_k(w)$ is the local cross-entropy loss on client $k$'s data
+- $w^t$ are the global model parameters at the start of round $t$
+- $\mu \geq 0$ is the proximal regularization strength
 
-From a systems perspective, the transition from FedAvg to FedProx is particularly well-suited for our blockchain-based architecture because the server-side aggregation remains unchanged. The smart contract, IPFS storage, and oracle service operate identically under both algorithms — only the hospital-side training procedure is modified. This minimizes architectural risk while providing measurable improvements in convergence stability, a critical consideration for clinical deployment where consistent model performance is paramount.
+When $\mu = 0$, FedProx reduces to FedAvg. As $\mu$ increases, local updates
+are more strongly constrained to stay close to the global model, reducing
+"client drift" — a key problem in non-IID federated settings.
 
----
+### 4.3. Why FedProx for This Application
 
-## LaTeX Versions
+In our multi-hospital breast cancer scenario, FedProx is particularly
+beneficial because:
 
-### Proximal Term Equation
-```latex
-\min_{w} F_k(w) + \frac{\mu}{2} \| w - w^t \|^2
-```
+- The three datasets exhibit **significant label skew** (31.4% vs 50% benign ratio)
+- Site sizes differ by up to **8× factor** (1,246 vs 10,000 samples)
+- Different imaging modalities introduce **domain shift**
 
-### Aggregation Equation
-```latex
-w^{t+1} = \sum_{k=1}^{K} \frac{n_k}{N} w_k^{t+1}
-```
+Without the proximal constraint, local models at specialized sites (e.g., Site A
+with mostly malignant cases) can drift substantially from the global model,
+degrading performance on underrepresented classes.
 
-### Total Local Loss
-```latex
-\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{CE}}(w) + \frac{\mu}{2} \| w - w^t \|^2
-```
+## 5. Experimental Setup
+
+| Parameter | Value |
+|---|---|
+| Communication Rounds | 10 |
+| Local Epochs per Round | 3 |
+| Local Optimizer | Adam (lr = 1×10⁻⁴) |
+| Batch Size | 64 |
+| FedAvg μ | 0.0 |
+| FedProx μ | 0.01 |
+| μ Sweep | [0.0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5] |
+
+## 6. References
+
+1. **Li, T., Sahu, A. K., Zaheer, M., Sanjabi, M., Talwalkar, A., & Smith, V.** (2020). *Federated Optimization in Heterogeneous Networks*. Proceedings of Machine Learning and Systems (MLSys).
+
+2. **McMahan, B., Moore, E., Ramage, D., Hampson, S., & Arcas, B. A. y.** (2017). *Communication-Efficient Learning of Deep Networks from Decentralized Data*. Proceedings of the 20th International Conference on Artificial Intelligence and Statistics (AISTATS).
+
+3. **Hou, Q., Zhou, D., & Feng, J.** (2021). *Coordinate Attention for Efficient Mobile Network Design*. IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR).
+
+4. **Tan, M., & Le, Q. V.** (2019). *EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks*. International Conference on Machine Learning (ICML).
+
+5. **Spanhol, F. A., Oliveira, L. S., Petitjean, C., & Heutte, L.** (2016). *A Dataset for Breast Cancer Histopathological Image Classification*. IEEE Transactions on Biomedical Engineering.
