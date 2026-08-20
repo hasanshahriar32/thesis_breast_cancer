@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Local Epochs Require a Controlled Sensitivity Study</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+.slide-container { width:1280px; min-height:720px; padding-top:1px; background:#FFFFFF; font-family:Arial, Helvetica, sans-serif; color:#2B2D42; }
+.header { margin:58px 84px 0 84px; display:flex; justify-content:space-between; align-items:flex-start; }
+.kicker { font-size:14px; font-weight:800; color:#00B4D8; letter-spacing:1.4px; text-transform:uppercase; }
+h1 { margin-top:15px; width:890px; font-size:45px; line-height:1.08; font-weight:800; letter-spacing:-1.6px; }
+.page { margin-top:5px; font-size:15px; color:#4A4E69; }
+.context { margin:26px 84px 0 84px; font-size:18px; line-height:1.5; font-weight:300; color:#4A4E69; width:970px; }
+.context strong { color:#2B2D42; font-weight:800; }
+.matrix { margin:38px 84px 0 84px; display:flex; align-items:flex-start; }
+.matrix-label { width:210px; padding-top:15px; }
+.matrix-label p:first-child { font-size:15px; color:#00B4D8; font-weight:800; letter-spacing:1.1px; text-transform:uppercase; }
+.matrix-label p:last-child { margin-top:8px; font-size:17px; line-height:1.4; color:#4A4E69; font-weight:300; }
+.epochs { display:flex; width:860px; border-top:5px solid #00B4D8; }
+.epoch { width:215px; min-height:120px; padding-top:18px; border-right:1px solid #D9E4E8; }
+.epoch:last-child { border-right:none; }
+.epoch .number { font-size:36px; line-height:1; font-weight:800; color:#2B2D42; }
+.epoch .unit { margin-top:7px; font-size:15px; color:#4A4E69; font-weight:300; }
+.epoch.current .number { color:#00B4D8; }
+.epoch.current .flag { margin-top:10px; font-size:13px; font-weight:800; color:#00B4D8; letter-spacing:0.6px; text-transform:uppercase; }
+.band { margin:50px 84px 0 84px; display:flex; border-top:1px solid #D9E4E8; padding-top:22px; }
+.band-item { width:365px; margin-right:38px; }
+.band-item:last-child { margin-right:0; }
+.bullet { width:12px; min-width:12px; min-height:12px; border-radius:50%; background:#00B4D8; float:left; margin-top:5px; margin-right:14px; }
+.band-item h2 { font-size:18px; line-height:1.25; font-weight:800; }
+.band-item p { margin:7px 0 0 26px; font-size:15px; line-height:1.5; font-weight:300; color:#4A4E69; }
+.footer { margin:32px 84px 0 84px; font-size:15px; line-height:1.45; color:#4A4E69; font-weight:300; }
+.footer strong { color:#2B2D42; font-weight:800; }
+</style>
+</head>
+<body>
+<div class="slide-container">
+  <div class="header">
+    <div><p class="kicker">Experiment design</p><h1>Local epochs require a controlled sensitivity study.</h1></div>
+    <p class="page">06</p>
+  </div>
+  <p class="context">The current review cites <strong>local_epochs = 3</strong> with learning rate <strong>0.001</strong>. Before a new μ sweep, test whether local training is converging and whether global evaluation remains discriminative.</p>
+  <div class="matrix">
+    <div class="matrix-label"><p>Two-site matrix</p><p>Hold partition, seed, optimizer, batch size, and class-weight policy constant.</p></div>
+    <div class="epochs">
+      <div class="epoch"><p class="number">1</p><p class="unit">local epoch</p></div>
+      <div class="epoch current"><p class="number">3</p><p class="unit">local epochs</p><p class="flag">Current setting</p></div>
+      <div class="epoch"><p class="number">5</p><p class="unit">local epochs</p></div>
+      <div class="epoch"><p class="number">10</p><p class="unit">local epochs</p></div>
+    </div>
+  </div>
+  <div class="band">
+    <div class="band-item"><div class="bullet"></div><h2>Log every round</h2><p>Local loss, local accuracy, global loss, accuracy, AUROC, F1, sensitivity, specificity, and confusion matrix.</p></div>
+    <div class="band-item"><div class="bullet"></div><h2>Inspect the failure mode</h2><p>Compare class predictions and probabilities, not accuracy alone; high sensitivity with low specificity can hide a majority-class bias.</p></div>
+    <div class="band-item"><div class="bullet"></div><h2>Use a diagnostic rule</h2><p>If specificity remains pinned across all settings, prioritize aggregation or evaluation debugging over further hyperparameter tuning.</p></div>
+  </div>
+  <p class="footer"><strong>Decision gate:</strong> only proceed to a full three-site FedAvg/FedProx comparison after the two-site matrix produces stable, non-degenerate behavior.</p>
+</div>
+</body>
+</html>

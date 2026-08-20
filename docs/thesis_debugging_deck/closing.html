@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Protect the Thesis by Protecting the Evidence</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+.slide-container { width: 1280px; min-height: 720px; background: #FFFFFF; color: #2B2D42; font-family: Arial, Helvetica, sans-serif; display: flex; flex-direction: column; }
+.top-rule { margin: 76px 86px 0 86px; width: 142px; min-height: 12px; background: #00B4D8; }
+.main { margin: 181px 86px 0 86px; display: flex; justify-content: space-between; align-items: flex-end; }
+.message { width: 805px; }
+.kicker { font-size: 15px; font-weight: 800; color: #00B4D8; letter-spacing: 1.5px; text-transform: uppercase; }
+h1 { margin-top: 20px; font-size: 61px; line-height: 1.03; font-weight: 800; letter-spacing: -2.4px; }
+.subtitle { margin-top: 25px; width: 660px; font-size: 24px; line-height: 1.48; font-weight: 300; color: #4A4E69; }
+.side { width: 204px; min-height: 252px; display: flex; flex-direction: column; justify-content: flex-end; border-left: 8px solid #00B4D8; padding-left: 24px; }
+.dot { width: 12px; min-height: 12px; border-radius: 50%; background: #00B4D8; margin-bottom: 17px; }
+.side p { width: 155px; color: #4A4E69; font-size: 16px; line-height: 1.5; font-weight: 300; }
+.footer { margin: 60px 86px 0 86px; color: #4A4E69; font-size: 15px; line-height: 1.4; letter-spacing: 0.25px; }
+.footer strong { color: #2B2D42; font-weight: 800; }
+</style>
+</head>
+<body>
+<div class="slide-container">
+  <div class="top-rule"></div>
+  <div class="main">
+    <div class="message">
+      <p class="kicker">Closing principle</p>
+      <h1>Protect the thesis<br>by protecting the evidence.</h1>
+      <p class="subtitle">Validate the pipeline first. Document the experiment second. Write the performance claim only when the result is reproducible.</p>
+    </div>
+    <div class="side">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      <p>Every debugging result is useful—when its status is made explicit.</p>
+    </div>
+  </div>
+  <p class="footer"><strong>Next milestone:</strong> a verified two-site baseline, followed by a controlled three-site FedAvg/FedProx comparison.</p>
+</div>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The Clinical Data-Sharing Constraint</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+.slide-container { width:1280px; min-height:720px; background:#FFFFFF; font-family:Arial, Helvetica, sans-serif; color:#2B2D42; overflow:auto; }
+.header { margin:64px 84px 0 84px; display:flex; justify-content:space-between; align-items:flex-start; }
+.kicker { font-size:15px; font-weight:700; color:#00B4D8; letter-spacing:1.4px; text-transform:uppercase; }
+h1 { margin-top:18px; font-size:49px; line-height:1.08; font-weight:800; letter-spacing:-1.7px; width:800px; }
+.page { font-size:15px; color:#4A4E69; margin-top:7px; }
+.main { margin:32px 84px 0 84px; display:flex; gap:40px; }
+.left { width:760px; }
+.item { display:flex; margin-bottom:20px; }
+.dot { width:12px; min-width:12px; min-height:12px; border-radius:50%; background:#00B4D8; margin-top:9px; margin-right:20px; }
+.item h2 { font-size:23px; line-height:1.2; font-weight:800; }
+.item p { margin-top:8px; font-size:18px; line-height:1.6; font-weight:300; color:#4A4E69; }
+.right { width:280px; border-left:5px solid #00B4D8; padding-left:27px; }
+.right h3 { font-size:19px; line-height:1.25; font-weight:800; }
+.right p { margin-top:18px; font-size:17px; line-height:1.6; font-weight:300; color:#4A4E69; }
+.citation { margin:20px 84px 0 84px; font-size:13px; line-height:1.45; color:#4A4E69; }
+</style>
+</head>
+<body>
+<div class="slide-container">
+  <div class="header"><div><p class="kicker">Thesis foundation</p><h1>The clinical data-sharing constraint is the real problem.</h1></div><p class="page">01</p></div>
+  <div class="main">
+    <div class="left">
+      <div class="item"><div class="dot"></div><div><h2>Histopathology benefits from multi-site evidence</h2><p>Robust breast-cancer classifiers need diverse images and patient populations, while each hospital naturally holds only a partial view of the problem.</p></div></div>
+      <div class="item"><div class="dot"></div><div><h2>Raw image centralization creates governance friction</h2><p>Medical images are sensitive. Collaborative training must respect institutional control, privacy obligations, and practical limitations on data sharing.</p></div></div>
+      <div class="item"><div class="dot"></div><div><h2>Federated learning is the methodological response</h2><p>Hospitals retain local data while the server aggregates locally computed model updates to create a shared model.</p></div></div>
+    </div>
+    <div class="right"><h3>Thesis scope</h3><p>Privacy-preserving breast-cancer image classification across heterogeneous hospital data, with FedAvg as the baseline and FedProx as a tested stabilization method.</p></div>
+  </div>
+  <p class="citation">Sources: McMahan et al. (2017); Rehman et al. (2023).</p>
+</div>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Immediate Next Actions</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+.slide-container { width: 1280px; min-height: 720px; background: #FFFFFF; color: #2B2D42; font-family: Arial, Helvetica, sans-serif; transform: translateY(-60px); }
+.header { margin: 58px 84px 0 84px; display: flex; justify-content: space-between; align-items: flex-start; }
+.kicker { color: #00B4D8; font-size: 14px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; }
+h1 { margin-top: 14px; width: 820px; font-size: 48px; line-height: 1.08; font-weight: 800; letter-spacing: -1.7px; }
+.page { margin-top: 5px; color: #4A4E69; font-size: 15px; }
+.main { margin: 10px 84px 0 84px; display: flex; gap: 54px; }
+.sequence { width: 748px; }
+.action { display: flex; min-height: 78px; margin-bottom: 8px; }
+.action-number { width: 72px; color: #00B4D8; font-size: 28px; line-height: 1; font-weight: 800; letter-spacing: -0.8px; }
+.action-body { width: 650px; border-top: 2px solid #D9E4E8; padding-top: 6px; }
+.action:first-child .action-body { border-top: 5px solid #00B4D8; padding-top: 6px; }
+.action h2 { font-size: 21px; line-height: 1.16; font-weight: 800; }
+.action p { margin-top: 6px; color: #4A4E69; font-size: 16px; line-height: 1.43; font-weight: 300; }
+.side { width: 270px; margin-top: 3px; border-top: 5px solid #00B4D8; padding-top: 8px; }
+.side-label { color: #00B4D8; font-size: 14px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; }
+.side h2 { margin-top: 13px; font-size: 22px; line-height: 1.16; font-weight: 800; }
+.side p { margin-top: 10px; color: #4A4E69; font-size: 16px; line-height: 1.5; font-weight: 300; }
+.side-item { display: flex; margin-top: 10px; }
+.dot { width: 12px; min-width: 12px; min-height: 12px; border-radius: 50%; background: #00B4D8; margin-top: 5px; margin-right: 12px; }
+.side-item span { color: #4A4E69; font-size: 15px; line-height: 1.43; font-weight: 300; }
+.footer { margin: 6px 84px 0 84px; width: 1060px; color: #4A4E69; font-size: 16px; line-height: 1.45; font-weight: 300; }
+.footer strong { color: #2B2D42; font-weight: 800; }
+</style>
+</head>
+<body>
+<div class="slide-container">
+  <div class="header">
+    <div>
+      <p class="kicker">Chronological action plan</p>
+      <h1>Immediate next actions</h1>
+    </div>
+    <p class="page">10</p>
+  </div>
+  <div class="main">
+    <div class="sequence">
+      <div class="action">
+        <p class="action-number">01</p>
+        <div class="action-body"><h2>Build aggregation unit tests.</h2><p>Test key coverage, tensor shapes/dtypes, sample-weight arithmetic, checkpoint loading, and integer/BatchNorm buffer handling.</p></div>
+      </div>
+      <div class="action">
+        <p class="action-number">02</p>
+        <div class="action-body"><h2>Audit labels and evaluation.</h2><p>Verify benign/malignant encoding, class balance, independent test splits, confusion-matrix orientation, and probability extraction.</p></div>
+      </div>
+      <div class="action">
+        <p class="action-number">03</p>
+        <div class="action-body"><h2>Run two-site local-epoch matrix.</h2><p>Compare 1/3/5/10 local epochs with fixed partitions/seeds; record losses, AUROC, F1, sensitivity, specificity, and confusion matrices.</p></div>
+      </div>
+      <div class="action">
+        <p class="action-number">04</p>
+        <div class="action-body"><h2>Rerun matched FedAvg/FedProx experiments.</h2><p>After non-degenerate two-site behavior, match initialization/protocol for three-site runs and update records with reproducible evidence.</p></div>
+      </div>
+    </div>
+    <div class="side">
+      <p class="side-label">Before writing results</p>
+      <h2>Stop if the evidence fails.</h2>
+      <p>Do not substitute parameter tuning for correctness checks.</p>
+      <div class="side-item"><div class="dot"></div><span>Specificity still pinned across settings</span></div>
+      <div class="side-item"><div class="dot"></div><span>One-client FL differs from direct local training</span></div>
+      <div class="side-item"><div class="dot"></div><span>Aggregation tests expose a key/dtype/buffer error</span></div>
+    </div>
+  </div>
+  <p class="footer"><strong>Research record:</strong> every run should link its configuration manifest, commit hash, dataset split identifiers, checkpoints, metrics, and decision note before it is referenced in the thesis.</p>
+</div>
+</body>
+</html>

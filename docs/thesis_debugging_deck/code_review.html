@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Code Review Identifies the Key Aggregation Risk</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+.slide-container { width: 1280px; min-height: 720px; background: #FFFFFF; color: #2B2D42; font-family: Arial, Helvetica, sans-serif; }
+.header { margin: 58px 84px 0 84px; display: flex; justify-content: space-between; align-items: flex-start; }
+.kicker { color: #00B4D8; font-size: 15px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; }
+h1 { margin-top: 14px; width: 890px; font-size: 48px; line-height: 1.08; font-weight: 800; letter-spacing: -1.7px; }
+.page { margin-top: 6px; color: #4A4E69; font-size: 15px; }
+/* Removed decorative guide to save vertical space */
+.columns { margin: 12px 84px 0 84px; display: flex; gap: 16px; }
+.column { width: 344px; }
+.step { color: #00B4D8; font-size: 15px; font-weight: 800; letter-spacing: 1.1px; }
+.dot { width: 12px; height: 12px; border-radius: 50%; background: #00B4D8; margin-top: 8px; }
+h2 { margin-top: 10px; font-size: 23px; line-height: 1.18; font-weight: 800; }
+p { color: #4A4E69; font-size: 17px; line-height: 1.52; font-weight: 300; }
+.column p { margin-top: 6px; }
+/* Shrink takeaway and source spacing and shorten blocks */
+.takeaway { margin: 18px 84px 0 84px; width: 980px; font-size: 22px; line-height: 1.4; color: #4A4E69; }
+.takeaway strong { color: #2B2D42; font-weight: 800; }
+.source { margin: 8px 84px 36px 84px; color: #4A4E69; font-size: 13px; line-height: 1.4; }
+code { font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="slide-container">
+  <div class="header">
+    <div>
+      <p class="kicker">Repository code review</p>
+      <h1>The aggregation path needs model-aware safeguards.</h1>
+    </div>
+    <p class="page">05</p>
+  </div>
+  <div class="columns">
+    <div class="column">
+      <p class="step">01 · CURRENT BEHAVIOR</p>
+      <div class="dot"></div>
+      <h2>Every state-dict tensor is weighted and averaged.</h2>
+      <p>The production FedProx aggregator converts tensors to float, stacks them, and applies sample-count weights to model keys.</p>
+    </div>
+    <div class="column">
+      <p class="step">02 · TECHNICAL RISK</p>
+      <div class="dot"></div>
+      <h2>BatchNorm buffers and counters need explicit treatment.</h2>
+      <p>Integer counters like <code>num_batches_tracked</code> must not be naively averaged; choose and document handling for running stats.</p>
+    </div>
+    <div class="column">
+      <p class="step">03 · VALIDATION GAP</p>
+      <div class="dot"></div>
+      <h2>The simulation does not represent the production vision model.</h2>
+      <p>The experiment uses a small MLP without BatchNorm, so it cannot validate EfficientNet-based aggregation behavior.</p>
+    </div>
+  </div>
+  <p class="takeaway"><strong>Conclusion:</strong> add dtype-, key-, and BatchNorm-aware aggregation tests before interpreting FedAvg/FedProx gaps.</p>
+  <p class="source">Repository evidence: <code>admin-backend/src/python/fedprox_aggregation.py</code>; <code>result/fedprox-result/experiments/fedprox_experiment.py</code>.</p>
+</div>
+</body>
+</html>

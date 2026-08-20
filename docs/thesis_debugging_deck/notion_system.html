@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Evidence Is Organized Chronologically in Notion</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { margin: 0; }
+/* keep min-height:720 but nudge the slide up so the overall page is <720px */
+.slide-container { width: 1280px; min-height: 720px; background: #FFFFFF; color: #2B2D42; font-family: Arial, Helvetica, sans-serif; margin-top: -41px; }
+.header { margin: 40px 84px 0 84px; display: flex; justify-content: space-between; align-items: flex-start; }
+.kicker { font-size: 14px; font-weight: 800; color: #00B4D8; letter-spacing: 1.5px; text-transform: uppercase; }
+h1 { margin-top: 14px; width: 940px; font-size: 45px; line-height: 1.08; font-weight: 800; letter-spacing: -1.5px; }
+.page { font-size: 15px; color: #4A4E69; }
+/* reduced vertical gaps inside to help layout, without changing font sizes or title top padding */
+.timeline { margin: 28px 84px 0 84px; display: flex; align-items: flex-start; width: 1112px; }
+.entry { width: 258px; min-height: 200px; margin-right: 26px; border-top: 5px solid #00B4D8; padding-top: 12px; }
+.entry:last-child { margin-right: 0; }
+.index { font-size: 14px; font-weight: 800; color: #00B4D8; letter-spacing: 1.2px; }
+.entry h2 { margin-top: 13px; font-size: 23px; line-height: 1.1; font-weight: 800; }
+.entry p { margin-top: 12px; width: 225px; font-size: 16px; line-height: 1.5; font-weight: 300; color: #4A4E69; }
+.status { margin-top: 12px; font-size: 13px; font-weight: 700; color: #2B2D42; text-transform: uppercase; letter-spacing: 0.6px; }
+.status .dot { display: inline-block; width: 12px; min-height: 12px; border-radius: 50%; background: #00B4D8; margin-right: 9px; vertical-align: -1px; }
+.boundary { margin: 16px 84px 0 84px; display: flex; align-items: flex-start; width: 980px; }
+.boundary-dot { width: 12px; min-width: 12px; min-height: 12px; border-radius: 50%; background: #00B4D8; margin-top: 6px; margin-right: 12px; }
+.boundary p { font-size: 21px; line-height: 1.42; font-weight: 300; color: #4A4E69; }
+.boundary strong { font-weight: 800; color: #2B2D42; }
+</style>
+</head>
+<body>
+<div class="slide-container">
+  <div class="header">
+    <div><p class="kicker">Research operating system</p><h1>Evidence is organized chronologically in Notion.</h1></div>
+    <p class="page">03</p>
+  </div>
+  <div class="timeline">
+    <div class="entry"><p class="index">01 · INPUTS</p><h2>Source register</h2><p>Datasets, papers, repository links, writing drafts, presentations, and source quality notes.</p><p class="status"><span class="dot"></span>Traceable origin</p></div>
+    <div class="entry"><p class="index">02 · RUNS</p><h2>Experiment log</h2><p>Seeds, partitions, hyperparameters, round-level metrics, checkpoints, and result status.</p><p class="status"><span class="dot"></span>Reproducible run</p></div>
+    <div class="entry"><p class="index">03 · LEARNING</p><h2>Debugging journal</h2><p>Hypothesis, code change, test, observed outcome, decision, and the next controlled action.</p><p class="status"><span class="dot"></span>Auditable decision</p></div>
+    <div class="entry"><p class="index">04 · WRITING</p><h2>Thesis outline</h2><p>Chapter-ready content with citations; only results that survive validation enter final claims.</p><p class="status"><span class="dot"></span>Defensible claim</p></div>
+  </div>
+  <div class="boundary"><div class="boundary-dot"></div><p><strong>Evidence boundary:</strong> early outputs remain visible for chronology, but are explicitly marked as provisional until the code, metrics, and experiment record agree.</p></div>
+</div>
+</body>
+</html>

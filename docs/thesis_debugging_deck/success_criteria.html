@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Success Criteria Determine When Results Enter the Thesis</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+.slide-container { width: 1280px; min-height: 720px; margin-top: -1px; padding-top: 1px; background: #FFFFFF; color: #2B2D42; font-family: Arial, Helvetica, sans-serif; }
+.header { margin: 58px 64px 0 64px; display: flex; justify-content: space-between; align-items: flex-start; }
+.kicker { color: #00B4D8; font-size: 14px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; }
+h1 { margin-top: 14px; width: 840px; font-size: 46px; line-height: 1.08; font-weight: 800; letter-spacing: -1.7px; }
+.page { margin-top: 5px; color: #4A4E69; font-size: 15px; }
+.intro { margin: 16px 64px 0 64px; width: 920px; color: #4A4E69; font-size: 18px; line-height: 1.48; font-weight: 300; }
+.criteria { margin: 32px 64px 0 64px; width: 1080px; display: flex; border-top: 5px solid #00B4D8; flex-wrap: wrap; gap: 12px 28px; }
+.criterion { width: 512px; min-height: 140px; padding-top: 8px; padding-right: 12px; border-right: 1px solid #D9E4E8; }
+.criterion:nth-child(2n) { border-right: none; }
+.num { color: #00B4D8; font-size: 15px; font-weight: 800; letter-spacing: 1.1px; }
+.dot { margin-top: 10px; width: 12px; min-height: 12px; border-radius: 50%; background: #00B4D8; }
+.criterion h2 { margin-top: 10px; font-size: 21px; line-height: 1.16; font-weight: 800; }
+.criterion p { margin-top: 8px; color: #4A4E69; font-size: 16px; line-height: 1.4; font-weight: 300; }
+.decision { margin: 28px 64px 0 64px; width: 1056px; display: flex; align-items: flex-start; }
+.decision-dot { width: 12px; min-width: 12px; min-height: 12px; border-radius: 50%; background: #00B4D8; margin-top: 7px; margin-right: 14px; }
+.decision p { color: #4A4E69; font-size: 22px; line-height: 1.4; font-weight: 300; }
+.decision strong { color: #2B2D42; font-weight: 800; }
+.footer { margin: 12px 64px 0 64px; color: #4A4E69; font-size: 12px; line-height: 1.35; }
+</style>
+</head>
+<body>
+<div class="slide-container">
+  <div class="header">
+    <div>
+      <p class="kicker">Evidence gate</p>
+      <h1>Success criteria determine when results enter the thesis.</h1>
+    </div>
+    <p class="page">09</p>
+  </div>
+  <p class="intro">A result becomes chapter-ready only when the implementation, evaluation, and experimental record tell the same story. Passing one metric is not sufficient.</p>
+  <div class="criteria">
+    <div class="criterion">
+      <p class="num">01 · INTEGRITY</p>
+      <div class="dot"></div>
+      <h2>Aggregation tests pass</h2>
+      <p>Model keys, tensor shapes, dtypes, sample weights, checkpoint loading, and non-trainable buffers are verified explicitly.</p>
+    </div>
+    <div class="criterion">
+      <p class="num">02 · EQUIVALENCE</p>
+      <div class="dot"></div>
+      <h2>One-client FL matches local training</h2>
+      <p>From the same initialization and configuration, a one-client federation round must agree with direct local training.</p>
+    </div>
+    <div class="criterion">
+      <p class="num">03 · DISCRIMINATION</p>
+      <div class="dot"></div>
+      <h2>Two-client behavior is non-degenerate</h2>
+      <p>Specificity, confusion matrices, predicted probabilities, and AUROC confirm that the model is not defaulting to one class.</p>
+    </div>
+    <div class="criterion">
+      <p class="num">04 · COMPARISON</p>
+      <div class="dot"></div>
+      <h2>FedAvg and FedProx are compared fairly</h2>
+      <p>Both algorithms use identical partitions, seeds, model initialization, metrics, and reporting of variation across sites.</p>
+    </div>
+  </div>
+  <div class="decision">
+    <div class="decision-dot"></div>
+    <p><strong>Decision rule:</strong> only after all four gates pass may the thesis report a federated performance claim or interpret a FedProx effect. Until then, values remain provisional debugging evidence.</p>
+  </div>
+  <p class="footer">Required audit trail: configuration manifest, dataset split identifiers, source commit, per-round metrics, evaluation outputs, and saved checkpoints.</p>
+</div>
+</body>
+</html>

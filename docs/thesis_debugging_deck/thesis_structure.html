@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><title>Thesis Structure</title><style>
+*{margin:0;padding:0;box-sizing:border-box}
+.slide-container{width:1280px;min-height:720px;background:#fff;font-family:Arial,Helvetica,sans-serif;color:#2B2D42;/* preserve top spacing inside to avoid margin collapse */padding-top:64px}
+.header{margin:0 84px 0;display:flex;justify-content:space-between}
+.kicker{font-size:15px;font-weight:700;color:#00B4D8;letter-spacing:1.3px;text-transform:uppercase}
+h1{margin-top:16px;font-size:47px;line-height:1.1;font-weight:800;letter-spacing:-1.6px}
+.page{font-size:15px;color:#4A4E69}
+.rail{margin:18px 84px 0;display:flex;min-height:0}
+.chapter{width:220px;border-top:7px solid #00B4D8;margin-right:12px;padding-top:8px}
+.chapter:last-child{margin-right:0}
+.num{font-size:15px;color:#00B4D8;font-weight:800;letter-spacing:1px}
+.chapter h2{margin-top:8px;font-size:22px;line-height:1.15;font-weight:800}
+.chapter p{margin-top:8px;font-size:16px;line-height:1.55;font-weight:300;color:#4A4E69;width:190px}
+.statement{margin:18px 84px 0;width:930px;font-size:25px;line-height:1.45;font-weight:300;color:#4A4E69}
+.statement strong{font-weight:800;color:#2B2D42}
+.dot{display:inline-block;width:12px;min-height:12px;border-radius:50%;background:#00B4D8;margin-right:14px}
+</style></head><body><div class="slide-container"><div class="header"><div><p class="kicker">Thesis architecture</p><h1>A five-chapter structure separates claims from evidence.</h1></div><p class="page">02</p></div><div class="rail"><div class="chapter"><p class="num">01</p><h2>Introduction</h2><p>Clinical context, privacy motivation, objectives, and research questions.</p></div><div class="chapter"><p class="num">02</p><h2>Literature Review</h2><p>Medical-image FL, non-IID challenges, FedAvg, FedProx, and governance.</p></div><div class="chapter"><p class="num">03</p><h2>Methodology</h2><p>Datasets, model, hospital partitioning, aggregation, and metrics.</p></div><div class="chapter"><p class="num">04</p><h2>Results</h2><p>Only reproducible experiments, error analysis, and uncertainty.</p></div><div class="chapter"><p class="num">05</p><h2>Discussion</h2><p>Interpretation, limitations, clinical relevance, and future work.</p></div></div><p class="statement"><span class="dot"></span><strong>Evidence boundary:</strong> exploratory results and debugging notes remain outside the final claims until the pipeline passes validation.</p></div></body></html>

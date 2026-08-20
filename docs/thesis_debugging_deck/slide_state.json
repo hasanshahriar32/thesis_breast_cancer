@@ -1,0 +1,133 @@
+{
+  "project_info": {
+    "title": "Breast Cancer Federated Learning Thesis",
+    "created": 1787239194.174,
+    "last_updated": 1787239667.385,
+    "total_slides": 12
+  },
+  "slides": [
+    {
+      "id": "cover",
+      "state": "edited",
+      "pageNum": 1
+    },
+    {
+      "id": "clinical_context",
+      "state": "edited",
+      "pageNum": 2
+    },
+    {
+      "id": "thesis_structure",
+      "state": "edited",
+      "pageNum": 3
+    },
+    {
+      "id": "notion_system",
+      "state": "edited",
+      "pageNum": 4
+    },
+    {
+      "id": "current_failure",
+      "state": "edited",
+      "pageNum": 5
+    },
+    {
+      "id": "code_review",
+      "state": "edited",
+      "pageNum": 6
+    },
+    {
+      "id": "local_epochs",
+      "state": "edited",
+      "pageNum": 7
+    },
+    {
+      "id": "debug_sequence",
+      "state": "edited",
+      "pageNum": 8
+    },
+    {
+      "id": "fedprox_hypothesis",
+      "state": "edited",
+      "pageNum": 9
+    },
+    {
+      "id": "success_criteria",
+      "state": "edited",
+      "pageNum": 10
+    },
+    {
+      "id": "next_actions",
+      "state": "edited",
+      "pageNum": 11
+    },
+    {
+      "id": "closing",
+      "state": "edited",
+      "pageNum": 12
+    }
+  ],
+  "outline": [
+    {
+      "id": "cover",
+      "title": "Breast Cancer Federated Learning Thesis",
+      "summary": "Title slide for the thesis structure, evidence organization, and FedProx debugging plan."
+    },
+    {
+      "id": "clinical_context",
+      "title": "The clinical data-sharing constraint",
+      "summary": "Why multi-institutional histopathology learning requires governance-preserving collaboration."
+    },
+    {
+      "id": "thesis_structure",
+      "title": "Thesis structure separates claims from evidence",
+      "summary": "Five chapter architecture and evidence boundaries for a defensible thesis."
+    },
+    {
+      "id": "notion_system",
+      "title": "Evidence is organized chronologically in Notion",
+      "summary": "Source register, experiment log, debugging journal, and chapter-ready thesis material."
+    },
+    {
+      "id": "current_failure",
+      "title": "The current FedProx result is not thesis-ready",
+      "summary": "Observed performance degradation, class-bias pattern, and flat mu sweep.",
+      "image_plan": "/home/ubuntu/upload/pasted_file_2SAQM3_image.png - Image 1 shows the exact code review advice and recommendations regarding the 63% result and BatchNorm bug matching slide 4/5/10 content"
+    },
+    {
+      "id": "code_review",
+      "title": "Code review identifies the key aggregation risk",
+      "summary": "State-dict aggregation, BatchNorm buffer risks, and divergence between production and simulation code."
+    },
+    {
+      "id": "local_epochs",
+      "title": "Local epochs require a controlled sensitivity study",
+      "summary": "A rigorous local-epoch experiment matrix and required round-level metrics."
+    },
+    {
+      "id": "debug_sequence",
+      "title": "The debugging sequence restores a defensible baseline",
+      "summary": "Reproducibility, aggregation, evaluation, and staged sanity checks."
+    },
+    {
+      "id": "fedprox_hypothesis",
+      "title": "FedProx is a hypothesis, not a guarantee",
+      "summary": "What FedAvg and FedProx claim and how this thesis should report them carefully."
+    },
+    {
+      "id": "success_criteria",
+      "title": "Success criteria determine when results enter the thesis",
+      "summary": "Tests and evidence required before making performance claims."
+    },
+    {
+      "id": "next_actions",
+      "title": "Immediate next actions",
+      "summary": "Practical sequence for debugging, re-running, and updating thesis content."
+    },
+    {
+      "id": "closing",
+      "title": "Protect the thesis by protecting the evidence",
+      "summary": "Closing message: validate pipeline first, write the claim second."
+    }
+  ]
+}
